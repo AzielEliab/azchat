@@ -1,0 +1,108 @@
+{
+  "author": "Aziel Eliab",
+  "title": "AZChat",
+  "version": "0.1.0",
+  "spec": "AZC-CHAT-0.1",
+  "class": "Plain",
+  "slug": "azchat",
+  "domain": "Comms",
+  "domain_id": "07",
+  "placement": "domain-software",
+  "door": "fraggate",
+  "homepage": "https://azchat-download-tracker.vibelock.workers.dev/",
+  "github": "https://github.com/AzielEliab/azchat",
+  "download": "https://azchat-download-tracker.vibelock.workers.dev/download",
+  "install": "https://azchat-download-tracker.vibelock.workers.dev/install.sh",
+  "openapi": "https://azchat-download-tracker.vibelock.workers.dev/openapi.json",
+  "skill": "https://azchat-download-tracker.vibelock.workers.dev/v1/skill",
+  "mcp": "https://azchat-download-tracker.vibelock.workers.dev/mcp",
+  "catalog_mcp": "https://aziel-runtime.vibelock.workers.dev/mcp",
+  "catalog": "https://aziel-runtime.vibelock.workers.dev/",
+  "catalog_product": "https://aziel-runtime.vibelock.workers.dev/p/azchat/",
+  "license": "Apache-2.0",
+  "license_url": "https://www.apache.org/licenses/LICENSE-2.0",
+  "one_line": "AZChat is Aziel Eliab software: spendable handles, ephemeral rooms, and an agent bus (AZC-CHAT-0.1). Mesh hop default off. Not SMTP. Not AZMail. FragGate only. Apache-2.0.",
+  "how_to_cite": "Eliab, Aziel. (2026). AZChat 0.1.0 [Software]. Apache-2.0. https://github.com/AzielEliab/azchat · https://azchat-download-tracker.vibelock.workers.dev/",
+  "apa": "Eliab, A. (2026). AZChat (Version 0.1.0) [Computer software]. https://azchat-download-tracker.vibelock.workers.dev/",
+  "identity": "Aziel Eliab only",
+  "forks": "welcome and always allowed",
+  "zenodo_status": "placeholder_no_doi_invented",
+  "software_deposit_needed": true,
+  "note": "No DOI is invented here. Cite GitHub and this Worker. Identity is Aziel Eliab only. Forks welcome. Not AZMail. Not SMTP. FragGate is THE single door.",
+  "dual_surface": {
+    "agent_mcp": "https://azchat-download-tracker.vibelock.workers.dev/mcp",
+    "catalog_mcp": "https://aziel-runtime.vibelock.workers.dev/mcp",
+    "catalog_fraggate_call": "https://aziel-runtime.vibelock.workers.dev/v1/fraggate/call",
+    "catalog_fraggate_list": "https://aziel-runtime.vibelock.workers.dev/v1/fraggate/list",
+    "catalog_software": "https://aziel-runtime.vibelock.workers.dev/v1/software",
+    "human_worker_ui": "https://azchat-download-tracker.vibelock.workers.dev/",
+    "download": "https://azchat-download-tracker.vibelock.workers.dev/download",
+    "law": "Agent MCP + human Worker UI + /download. FragGate is THE single door. Do not gut either surface."
+  },
+  "fraggate": {
+    "kernel": "https://github.com/AzielEliab/fraggate",
+    "runtime": "https://github.com/AzielEliab/aziel-runtime",
+    "list": "https://aziel-runtime.vibelock.workers.dev/v1/fraggate/list",
+    "describe": "https://aziel-runtime.vibelock.workers.dev/v1/fraggate/describe?slug=azchat",
+    "call": "https://aziel-runtime.vibelock.workers.dev/v1/fraggate/call",
+    "software": "https://aziel-runtime.vibelock.workers.dev/v1/software",
+    "mcp": "https://aziel-runtime.vibelock.workers.dev/mcp",
+    "slug": "azchat"
+  },
+  "peers": {
+    "aziel_runtime": {
+      "role": "catalog + FragGate door + true AZChat engine",
+      "github": "https://github.com/AzielEliab/aziel-runtime",
+      "homepage": "https://aziel-runtime.vibelock.workers.dev/",
+      "paths": ["/v1/fraggate/list", "/v1/fraggate/describe", "/v1/fraggate/call", "/v1/software", "/mcp"],
+      "merge": false
+    },
+    "azmail": {
+      "role": "Comms neighbor — not bridged",
+      "slug": "azmail",
+      "name": "AZMail",
+      "github": "https://github.com/AzielEliab/azmail",
+      "homepage": "https://azmail-download-tracker.vibelock.workers.dev/",
+      "note": "Mail airlock. Do not bridge AZChat ↔ AZMail. Not SMTP from this product.",
+      "merge": false
+    },
+    "aznet": {
+      "role": "Network neighbor",
+      "slug": "aznet",
+      "name": "AZNet",
+      "homepage": "https://aznet-download-tracker.vibelock.workers.dev/",
+      "merge": false
+    },
+    "peacelock": {
+      "role": "Evidence neighbor",
+      "slug": "peacelock",
+      "name": "PeaceLock",
+      "homepage": "https://peacelock-download-tracker.vibelock.workers.dev/",
+      "merge": false
+    },
+    "hubs": {
+      "azieleliab": "https://www.azieleliab.com/",
+      "azielcorpuslibrary": "https://www.azielcorpuslibrary.net/",
+      "godlock": "https://godlock.uk/"
+    }
+  },
+  "clients": [
+    "ChatGPT (GPT Actions / OpenAI)",
+    "Grok (xAI)",
+    "Venice",
+    "Claude (Anthropic)",
+    "Cursor (MCP)",
+    "Glama (MCP)",
+    "Perplexity",
+    "Microsoft Copilot / Bing",
+    "Google Gemini / Vertex",
+    "Mistral",
+    "Meta AI",
+    "Apple Intelligence surfaces",
+    "Amazon Q tooling",
+    "DuckAssist",
+    "You.com",
+    "Cohere",
+    "other MCP/OpenAPI-capable assistants"
+  ]
+}

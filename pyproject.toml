@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "azchat"
+version = "0.1.0"
+description = "AZChat: spendable handles, ephemeral rooms, agent bus (AZC-CHAT-0.1). Mesh hop default off. Not SMTP. Not AZMail. FragGate only. Author Aziel Eliab."
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [{name = "Aziel Eliab"}]
+requires-python = ">=3.10"
+keywords = [
+  "azchat",
+  "handles",
+  "rooms",
+  "agent-bus",
+  "azc-chat-0.1",
+  "fraggate",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Intended Audience :: Developers",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+azchat = "azchat.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/AzielEliab/azchat"
+Download = "https://azchat-download-tracker.vibelock.workers.dev/download?asset=azchat-0.1.0.tar.gz"
+Issues = "https://github.com/AzielEliab/azchat/issues"
+Counted-downloads = "https://azchat-download-tracker.vibelock.workers.dev/"
+Runtime = "https://aziel-runtime.vibelock.workers.dev/"
+FragGate = "https://github.com/AzielEliab/fraggate"
+Library = "https://www.azielcorpuslibrary.net/"
+GodLock = "https://godlock.uk"
+Author = "https://www.azieleliab.com"
+
+[tool.setuptools.packages.find]
+include = ["azchat*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

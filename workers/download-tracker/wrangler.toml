@@ -1,0 +1,30 @@
+name = "azchat-download-tracker"
+main = "src/index.js"
+compatibility_date = "2026-09-10"
+workers_dev = true
+account_id = "ac575a9b822bea2bed97d0ab73aed238"
+
+# Isolated counter: dedicated KV namespace AZCHAT_DOWNLOADS (live).
+# Do not reuse AZMAIL_DOWNLOADS, AZCOHERENCE_DOWNLOADS, or any other product id.
+# Coordinator binds this id on deploy if CI cannot create KV.
+[[kv_namespaces]]
+binding = "DOWNLOADS"
+id = "01a3bbf8ad5e449eb0eb7648d75f8ae0"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+# /mcp and /mcp/ must hit the Worker (not ASSETS) so GET/POST MCP is not 404.
+# /v1/* covers /v1/fraggate/*, /v1/mesh/* (AZIEL_RUNTIME proxy) and local /v1/{op}.
+run_worker_first = ["/", "/download", "/download/*", "/stats", "/event", "/go", "/count", "/install.sh", "/v1", "/v1/*", "/openapi.json", "/ai", "/ai/*", "/mcp", "/mcp/", "/cite.json", "/sitemap.xml", "/robots.txt", "/llms.txt", "/ai.txt"]
+
+[vars]
+AZIEL_RUNTIME_ORIGIN = "https://aziel-runtime.vibelock.workers.dev"
+
+[[services]]
+binding = "AZIEL_RUNTIME"
+service = "aziel-runtime"
+
+[observability]
+enabled = true
+head_sampling_rate = 1

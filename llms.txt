@@ -1,0 +1,68 @@
+# AZChat
+
+Author: Aziel Eliab only
+Identity: Aziel Eliab only
+One-line: AZChat is Aziel Eliab software: spendable handles, ephemeral rooms, and an agent bus (AZC-CHAT-0.1). Mesh hop default off. Not SMTP. Not AZMail. FragGate only. Apache-2.0.
+Spec: AZC-CHAT-0.1
+Class: Plain
+Slug: azchat
+Domain: Comms (07)
+Door: FragGate is THE single door
+GitHub: https://github.com/AzielEliab/azchat
+Homepage: https://azchat-download-tracker.vibelock.workers.dev/
+Download: https://azchat-download-tracker.vibelock.workers.dev/download
+Install: https://azchat-download-tracker.vibelock.workers.dev/install.sh
+OpenAPI: https://azchat-download-tracker.vibelock.workers.dev/openapi.json
+Skill: https://azchat-download-tracker.vibelock.workers.dev/v1/skill
+Cite: https://azchat-download-tracker.vibelock.workers.dev/cite.json
+
+## Dual surface (do not gut either)
+
+Agent MCP: POST https://azchat-download-tracker.vibelock.workers.dev/mcp
+Catalog MCP: POST https://aziel-runtime.vibelock.workers.dev/mcp (FragGate slug azchat)
+Human Worker UI: https://azchat-download-tracker.vibelock.workers.dev/
+Counted download: https://azchat-download-tracker.vibelock.workers.dev/download
+Law: agent MCP + human Worker UI + /download. FragGate is THE single door.
+
+## aziel-runtime FragGate (catalog door + true engine)
+
+Kernel: https://github.com/AzielEliab/fraggate
+Runtime: https://github.com/AzielEliab/aziel-runtime
+GET https://aziel-runtime.vibelock.workers.dev/v1/fraggate/list
+GET https://aziel-runtime.vibelock.workers.dev/v1/fraggate/describe?slug=azchat
+POST https://aziel-runtime.vibelock.workers.dev/v1/fraggate/call { "slug": "azchat", "op": "<LIVE_OP>", "payload": {} }
+GET https://aziel-runtime.vibelock.workers.dev/v1/software
+POST https://aziel-runtime.vibelock.workers.dev/mcp
+Worker PROXY: GET|POST https://azchat-download-tracker.vibelock.workers.dev/v1/fraggate/{list,describe,call}
+
+## Peers (do not merge / do not bridge)
+
+AZMail / azmail — Comms neighbor. Not bridged. Not SMTP.
+ https://azmail-download-tracker.vibelock.workers.dev/
+AZNet / aznet — Network neighbor.
+PeaceLock / peacelock — Evidence neighbor.
+aziel-runtime — catalog door + true engine. /v1/fraggate/list /v1/fraggate/call /v1/software /mcp
+
+## Softwares hubs
+
+https://www.azieleliab.com/
+https://www.azielcorpuslibrary.net/
+https://godlock.uk/
+
+## Ops
+
+POST /v1/handle_new, POST /v1/handle_rotate, POST /v1/room_open, POST /v1/room_post, POST /v1/room_pull, POST /v1/bus_send, POST /v1/bus_poll, POST /v1/verify_receipt, POST /v1/import_export, GET /v1/health, GET /v1/skill, GET /v1/doctor
+FragGate proxy: GET /v1/fraggate/list, GET /v1/fraggate/describe, POST /v1/fraggate/call (via AZIEL_RUNTIME)
+Suite mesh: GET /v1/mesh PROXY to aziel-runtime. Default OFF. GET never enables. Product-local mesh_enable is stub/REFUSE.
+Catalog LIVE_OPS: health, skill, doctor, handle_new, handle_rotate, room_open, room_post, room_pull, bus_send, bus_poll, verify_receipt, import_export
+MCP tools: azchat_health, azchat_skill, azchat_doctor, azchat_handle_new, azchat_handle_rotate, azchat_room_open, azchat_room_post, azchat_room_pull, azchat_bus_send, azchat_bus_poll, azchat_verify_receipt, azchat_import_export
+
+## AI clients (full set — never the short triad only)
+
+Works with ChatGPT (GPT Actions / OpenAI), Grok (xAI), Venice, Claude (Anthropic), Cursor (MCP), Glama (MCP), Perplexity, Microsoft Copilot / Bing, Google Gemini / Vertex, Mistral, Meta AI, Apple Intelligence surfaces, Amazon Q tooling, DuckAssist, You.com, Cohere, and other MCP/OpenAPI-capable assistants.
+Law: Mesh hop default off. Not SMTP. Not AZMail. Do not bridge. Stranger room_pull is 404.
+License: Apache-2.0
+Forks: welcome and always allowed
+DOI: none invented; software deposit still needed.
+
+Indexing, metadata scrape, and AI grounding of public pages are allowed.

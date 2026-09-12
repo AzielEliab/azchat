@@ -19,8 +19,10 @@ def test_seo_and_softwareapplication_json_ld() -> None:
     assert "Aziel Eliab" in HOME
     assert "cite.json" in HOME
     assert "sitemap.xml" in HOME
-    assert "Everblooming sigil" in HOME
+    assert 'src="/sigil.png" width="40" height="40" alt=""' in HOME
     assert "/sigil.png" in HOME
+    assert "Everblooming" not in HOME
+    assert "everblooming" not in HOME
 
 
 def test_workspace_shows_fraggate_door_and_peers() -> None:

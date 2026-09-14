@@ -6,6 +6,7 @@
  * /v1/mesh/* PROXY to aziel-runtime (AZIEL_RUNTIME binding).
  * Not a Softwares-tab product — hub cite / Worker mesh cross-map only.
  * Product-local mesh_enable is stub/REFUSE. AZChat mesh hop default off.
+ * SPLIT THE WIRES (STW-1.0) + COLD-COPY SURVIVAL (CCS-1.0) are hub cites.
  * Author: Aziel Eliab only.
  */
 
@@ -87,8 +88,112 @@ export const QNS_CD = Object.freeze({
   author: IDENTITY,
 });
 
+/** SPLIT THE WIRES — two sockets. Tip tick ≠ dwell. Hop default off. Cite only. */
+export const STW_SPEC = "STW-1.0";
+export const STW_NAME = "SPLIT THE WIRES";
+export const STW_TIP_TICK_MS_MIN = 500;
+export const STW_TIP_TICK_MS_MAX = 1000;
+export const STW_DWELL_S = 777;
+export const STW_DWELL_MS = 777000;
+export const STW_TIP_ONLY = true;
+export const STW_PULL_ONLY = true;
+export const STW_UPDATE_IS_PROOF = true;
+export const STW_UPDATE_IS_TIMER = false;
+export const STW_EQUIVOCATION_ENDS_PEER = true;
+export const STW_EMIT_LAST_LOCAL = true;
+export const STW_PHOENIX_LOCAL_ONLY = true;
+export const STW_AUTO_SPLICE = false;
+export const STW_HEARTBEAT_LOSS_IS_POISON = false;
+export const STW_SOCKETS_EQUAL = false;
+export const STW_HOP_DEFAULT_OFF = true;
+export const STW_TIP_SOCKET = "tip";
+export const STW_DWELL_SOCKET = "dwell";
+
+export const STW_LAW = Object.freeze([
+  "tip-only 0.5–1s tick",
+  "pull-only payload",
+  "update=proof not timer",
+  "777s dwell after valid cite",
+  "equivocation ends peer",
+  "emit last locally",
+  "Phoenix local only",
+  "partition no auto-splice",
+  "heartbeat loss≠poison",
+  "1s≠777s sockets",
+]);
+
+export const STW = Object.freeze({
+  spec: STW_SPEC,
+  name: STW_NAME,
+  kind: "hub_cite",
+  software_tab: false,
+  hop_default_off: true,
+  tip_only: true,
+  tip_tick_ms_min: STW_TIP_TICK_MS_MIN,
+  tip_tick_ms_max: STW_TIP_TICK_MS_MAX,
+  pull_only: true,
+  update_is_proof: true,
+  update_is_timer: false,
+  dwell_s: STW_DWELL_S,
+  dwell_ms: STW_DWELL_MS,
+  equivocation_ends_peer: true,
+  emit_last_local: true,
+  phoenix_local_only: true,
+  auto_splice: false,
+  heartbeat_loss_is_poison: false,
+  sockets_equal: false,
+  tip_socket: STW_TIP_SOCKET,
+  dwell_socket: STW_DWELL_SOCKET,
+  law: STW_LAW,
+  identity: IDENTITY,
+  author: IDENTITY,
+  note: "SPLIT THE WIRES. Tip-only 0.5–1s tick. Pull-only payload. Update=proof not timer. 777s dwell after valid cite. Equivocation ends peer. Emit last locally. Phoenix local only. Partition no auto-splice. Heartbeat loss≠poison. 1s≠777s sockets. AZChat mesh hop default off. Cite only.",
+});
+
+/** COLD-COPY SURVIVAL — replicas outlive the live body and the creators. Cite only. */
+export const CCS_SPEC = "CCS-1.0";
+export const CCS_NAME = "COLD-COPY SURVIVAL";
+export const CCS_MULTIPLY_COLD_COPIES = true;
+export const CCS_MIN_COLD_COPIES = 2;
+export const CCS_LIVE_BODY_SYNC = false;
+export const CCS_TIP_EXPENSIVE_TO_ERASE = true;
+export const CCS_SERVER_PULL_WIPES_COLD = false;
+export const CCS_HASH_ABSOLUTE_POISON_REFUSE = true;
+export const CCS_DATA_OUTLIVES_CREATORS = true;
+export const CCS_HOP_DEFAULT_OFF = true;
+
+export const CCS_LAW = Object.freeze([
+  "multiply cold copies",
+  "refuse live body sync",
+  "tip expensive to erase",
+  "server pull cannot wipe cold replicas",
+  "hash-absolute poison refuse",
+  "data outlives creators",
+]);
+
+export const CCS = Object.freeze({
+  spec: CCS_SPEC,
+  name: CCS_NAME,
+  kind: "hub_cite",
+  software_tab: false,
+  hop_default_off: true,
+  multiply_cold_copies: true,
+  min_cold_copies: CCS_MIN_COLD_COPIES,
+  live_body_sync: false,
+  tip_expensive_to_erase: true,
+  server_pull_wipes_cold: false,
+  hash_absolute_poison_refuse: true,
+  data_outlives_creators: true,
+  law: CCS_LAW,
+  companion: Object.freeze(["STW-1.0", "QNM-BUILD-1.0"]),
+  keeps_split_wires: true,
+  identity: IDENTITY,
+  author: IDENTITY,
+  note: "COLD-COPY SURVIVAL. Multiply cold copies. Refuse live body sync. Tip expensive to erase. Server pull cannot wipe cold replicas. Hash-absolute poison refuse. Data outlives creators. Keeps SPLIT THE WIRES. AZChat mesh hop default off. Cite only.",
+});
+
 export const MESH_NOTE =
-  "QNM-BUILD-1.0. QNS-CD-1.0 photon QNS1 packet transfer (hub cite / Worker mesh cross-map only). Suite mesh default off. Live|locked|isolated counts only. No Node Gate. No public qnsd proxy. No auto-heal. Not an anonymity network. AZChat mesh hop default off. Author: Aziel Eliab only.";
+  "QNM-BUILD-1.0. QNS-CD-1.0 photon QNS1 packet transfer (hub cite / Worker mesh cross-map only). SPLIT THE WIRES (STW-1.0). COLD-COPY SURVIVAL (CCS-1.0). Suite mesh default off. Live|locked|isolated counts only. No Node Gate. No public qnsd proxy. No auto-heal. Not an anonymity network. AZChat mesh hop default off. Author: Aziel Eliab only.";
 
 export const MESH_OPS = Object.freeze([
   "status",
@@ -197,6 +302,10 @@ export function emptyMesh(extra = {}) {
     door: MESH_PATH,
     qns_cd_spec: QNS_CD_SPEC,
     qns_cd: QNS_CD,
+    stw_spec: STW_SPEC,
+    split_the_wires: STW,
+    ccs_spec: CCS_SPEC,
+    cold_copy_survival: CCS,
     ...extra,
     spec: QNM_SPEC,
     rollup,
@@ -207,6 +316,10 @@ export function emptyMesh(extra = {}) {
     identity: MESH_IDENTITY,
     qns_cd_spec: QNS_CD_SPEC,
     qns_cd: QNS_CD,
+    stw_spec: STW_SPEC,
+    split_the_wires: STW,
+    ccs_spec: CCS_SPEC,
+    cold_copy_survival: CCS,
   };
 }
 
@@ -268,7 +381,7 @@ export function parseMeshDoc(body) {
     source: inner.source || "parsed",
     door: inner.door || MESH_PATH,
     note: enabled
-      ? "QNM-BUILD-1.0. QNS-CD-1.0 photon QNS1 packet transfer. Suite mesh is on. Live|locked|isolated counts only. No Node Gate. No public qnsd proxy. No auto-heal. Not an anonymity network. AZChat hop stays off unless suite radios are on."
+      ? "QNM-BUILD-1.0. QNS-CD-1.0 photon QNS1 packet transfer. SPLIT THE WIRES. COLD-COPY SURVIVAL. Suite mesh is on. Live|locked|isolated counts only. No Node Gate. No public qnsd proxy. No auto-heal. Not an anonymity network. AZChat hop stays off unless suite radios are on."
       : MESH_NOTE,
   });
 }
@@ -309,6 +422,10 @@ export function publicMesh(mesh) {
     note: m.note || MESH_NOTE,
     qns_cd_spec: QNS_CD_SPEC,
     qns_cd: QNS_CD,
+    stw_spec: STW_SPEC,
+    split_the_wires: STW,
+    ccs_spec: CCS_SPEC,
+    cold_copy_survival: CCS,
   };
 }
 
@@ -316,12 +433,12 @@ export function meshStatusLine(mesh) {
   const m = mesh && typeof mesh === "object" ? mesh : emptyMesh();
   if (m.enabled) {
     const r = meshRollup(m);
-    return "Suite mesh: on · live " + r.live + " · locked " + r.locked + " · isolated " + r.isolated + ". QNS-CD-1.0. Not an anonymity network.";
+    return "Suite mesh: on · live " + r.live + " · locked " + r.locked + " · isolated " + r.isolated + ". QNS-CD-1.0. SPLIT THE WIRES. COLD-COPY SURVIVAL. Not an anonymity network.";
   }
   if (m.status === "unavailable") {
-    return "Suite mesh: off (unavailable). QNM-BUILD-1.0. QNS-CD-1.0. Not an anonymity network.";
+    return "Suite mesh: off (unavailable). QNM-BUILD-1.0. QNS-CD-1.0. SPLIT THE WIRES. COLD-COPY SURVIVAL. Not an anonymity network.";
   }
-  return "Suite mesh: off (default). QNM-BUILD-1.0. QNS-CD-1.0. Not an anonymity network.";
+  return "Suite mesh: off (default). QNM-BUILD-1.0. QNS-CD-1.0. SPLIT THE WIRES. COLD-COPY SURVIVAL. Not an anonymity network.";
 }
 
 /** Public Live Nodes count. Never auto-heal a visiting floor. */
@@ -336,6 +453,273 @@ export function attachQnsCd(doc) {
     return { qns_cd_spec: QNS_CD_SPEC, qns_cd: QNS_CD };
   }
   return { ...doc, qns_cd_spec: QNS_CD_SPEC, qns_cd: QNS_CD };
+}
+
+/** Hub cite only. Does not enable hop radios. */
+export function attachSplitTheWires(doc) {
+  if (doc == null || typeof doc !== "object" || Array.isArray(doc)) {
+    return { stw_spec: STW_SPEC, split_the_wires: STW };
+  }
+  return { ...doc, stw_spec: STW_SPEC, split_the_wires: STW };
+}
+
+/** Hub cite only. Does not wipe cold replicas. Does not enable hop radios. */
+export function attachColdCopySurvival(doc) {
+  if (doc == null || typeof doc !== "object" || Array.isArray(doc)) {
+    return { ccs_spec: CCS_SPEC, cold_copy_survival: CCS };
+  }
+  return { ...doc, ccs_spec: CCS_SPEC, cold_copy_survival: CCS };
+}
+
+export function attachMeshCites(doc) {
+  return attachColdCopySurvival(attachSplitTheWires(attachQnsCd(doc)));
+}
+
+export function stwTipTickOk(ms) {
+  const n = Number(ms);
+  return Number.isFinite(n) && n >= STW_TIP_TICK_MS_MIN && n <= STW_TIP_TICK_MS_MAX;
+}
+
+export function stwPayloadOk(mode) {
+  return String(mode || "").trim().toLowerCase() === "pull";
+}
+
+export function stwUpdateOk(kind) {
+  const k = String(kind || "").trim().toLowerCase();
+  return k === "proof" || k === "cite";
+}
+
+export function stwDwellOpen(citeUtc, nowUtc) {
+  const cite = Date.parse(citeUtc);
+  const now = nowUtc == null ? Date.now() : Date.parse(nowUtc);
+  if (!Number.isFinite(cite) || !Number.isFinite(now)) return false;
+  return (now - cite) >= 0 && (now - cite) < STW_DWELL_MS;
+}
+
+export function stwEquivocationEndsPeer(tipA, tipB) {
+  if (tipA == null || tipB == null) return false;
+  const a = String(tipA).trim();
+  const b = String(tipB).trim();
+  return a !== "" && b !== "" && a !== b;
+}
+
+export function stwEmitLastScope(scope) {
+  return String(scope || "").trim().toLowerCase() === "local";
+}
+
+export function stwPhoenixOk(scope) {
+  return String(scope || "").trim().toLowerCase() === "local";
+}
+
+export function stwPartitionSpliceOk() {
+  return false;
+}
+
+export function stwHeartbeatLossIsPoison() {
+  return false;
+}
+
+export function stwSocketsSplit(tipSocket, dwellSocket) {
+  const tip = String(tipSocket || "").trim();
+  const dwell = String(dwellSocket || "").trim();
+  if (!tip || !dwell) return false;
+  return tip !== dwell;
+}
+
+export function stwHopDefaultOff() {
+  return STW_HOP_DEFAULT_OFF && MESH_DEFAULT_OFF;
+}
+
+function stwRefuse(code, reason) {
+  return {
+    ok: false,
+    refuse: true,
+    spec: STW_SPEC,
+    name: STW_NAME,
+    code,
+    reason,
+    hop_default_off: true,
+    author: IDENTITY,
+  };
+}
+
+function stwPass(code, extra = {}) {
+  return {
+    ok: true,
+    refuse: false,
+    spec: STW_SPEC,
+    name: STW_NAME,
+    code,
+    hop_default_off: true,
+    author: IDENTITY,
+    ...extra,
+  };
+}
+
+export function evaluateSplitTheWires(event = {}) {
+  const e = event && typeof event === "object" && !Array.isArray(event) ? event : {};
+  const kind = String(e.kind || e.op || "").trim().toLowerCase();
+  if (e.hop === true || e.enable_hop === true || kind === "hop") {
+    return stwRefuse("STW-HOP-DEFAULT-OFF", "AZChat mesh hop default off.");
+  }
+  if (kind === "tick" || kind === "tip_tick") {
+    if (!stwTipTickOk(e.ms != null ? e.ms : e.tick_ms)) {
+      return stwRefuse("STW-TIP-TICK", "tip-only 0.5–1s tick");
+    }
+    if (e.payload && String(e.payload).toLowerCase() !== "tip") {
+      return stwRefuse("STW-TIP-ONLY", "tip-only 0.5–1s tick");
+    }
+    return stwPass("STW-TIP-TICK");
+  }
+  if (kind === "payload" || kind === "body") {
+    if (!stwPayloadOk(e.mode || e.payload_mode)) {
+      return stwRefuse("STW-PULL-ONLY", "pull-only payload");
+    }
+    return stwPass("STW-PULL-ONLY");
+  }
+  if (kind === "update") {
+    const via = e.update || e.via || e.proof_kind;
+    if (String(via || "").toLowerCase() === "timer") {
+      return stwRefuse("STW-UPDATE-PROOF", "update=proof not timer");
+    }
+    if (!stwUpdateOk(via)) {
+      return stwRefuse("STW-UPDATE-PROOF", "update=proof not timer");
+    }
+    return stwPass("STW-UPDATE-PROOF");
+  }
+  if (kind === "dwell") {
+    if (!e.cite) return stwRefuse("STW-DWELL", "777s dwell after valid cite");
+    return stwPass("STW-DWELL", { dwell_open: stwDwellOpen(e.cite, e.now) });
+  }
+  if (kind === "equivocation") {
+    if (stwEquivocationEndsPeer(e.tip_a, e.tip_b)) {
+      return stwPass("STW-EQUIVOCATION-END-PEER", { end_peer: true });
+    }
+    return stwPass("STW-EQUIVOCATION-NONE", { end_peer: false });
+  }
+  if (kind === "emit_last") {
+    if (!stwEmitLastScope(e.scope)) return stwRefuse("STW-EMIT-LAST-LOCAL", "emit last locally");
+    return stwPass("STW-EMIT-LAST-LOCAL");
+  }
+  if (kind === "phoenix") {
+    if (!stwPhoenixOk(e.scope)) return stwRefuse("STW-PHOENIX-LOCAL", "Phoenix local only");
+    return stwPass("STW-PHOENIX-LOCAL");
+  }
+  if (kind === "splice" || kind === "partition_splice") {
+    return stwRefuse("STW-NO-AUTO-SPLICE", "partition no auto-splice");
+  }
+  if (kind === "heartbeat_loss") {
+    return stwPass("STW-HEARTBEAT-LOSS-NOT-POISON", { poison: false, suspect: true });
+  }
+  if (kind === "socket") {
+    if (!stwSocketsSplit(e.tip_socket || e.tip, e.dwell_socket || e.dwell)) {
+      return stwRefuse("STW-SOCKETS-SPLIT", "1s≠777s sockets");
+    }
+    return stwPass("STW-SOCKETS-SPLIT");
+  }
+  return stwRefuse("STW-UNKNOWN", "unknown SPLIT THE WIRES event");
+}
+
+export function ccsColdCopiesOk(copies) {
+  if (!Array.isArray(copies)) return false;
+  const ids = copies.map((c) => {
+    if (c == null) return "";
+    if (typeof c === "string") return c.trim();
+    return String(c.id || c.hash || c.path || "").trim();
+  }).filter(Boolean);
+  return new Set(ids).size >= CCS_MIN_COLD_COPIES;
+}
+
+export function ccsLiveBodySyncOk() {
+  return false;
+}
+
+export function ccsTipEraseOk(effort) {
+  const e = String(effort || "").trim().toLowerCase();
+  if (!e || e === "cheap" || e === "timer" || e === "server_pull" || e === "wipe") return false;
+  return e === "local_operator" || e === "expensive";
+}
+
+export function ccsServerPullWipesCold() {
+  return false;
+}
+
+export function ccsHashAbsolutePoisonRefuse(hash, poisonSet) {
+  const h = String(hash || "").trim().toLowerCase();
+  if (!h) return true;
+  const set = Array.isArray(poisonSet) ? poisonSet : (poisonSet ? [poisonSet] : []);
+  return set.map((p) => String(p).trim().toLowerCase()).includes(h);
+}
+
+export function ccsDataOutlivesCreators() {
+  return true;
+}
+
+function ccsRefuse(code, reason) {
+  return {
+    ok: false,
+    refuse: true,
+    spec: CCS_SPEC,
+    name: CCS_NAME,
+    code,
+    reason,
+    hop_default_off: true,
+    keeps_split_wires: true,
+    author: IDENTITY,
+  };
+}
+
+function ccsPass(code, extra = {}) {
+  return {
+    ok: true,
+    refuse: false,
+    spec: CCS_SPEC,
+    name: CCS_NAME,
+    code,
+    hop_default_off: true,
+    keeps_split_wires: true,
+    author: IDENTITY,
+    ...extra,
+  };
+}
+
+export function evaluateColdCopySurvival(event = {}) {
+  const e = event && typeof event === "object" && !Array.isArray(event) ? event : {};
+  const kind = String(e.kind || e.op || "").trim().toLowerCase();
+  if (e.hop === true || e.enable_hop === true || kind === "hop") {
+    return ccsRefuse("CCS-HOP-DEFAULT-OFF", "AZChat mesh hop default off.");
+  }
+  if (kind === "live_body_sync" || kind === "sync_live") {
+    return ccsRefuse("CCS-NO-LIVE-BODY-SYNC", "refuse live body sync");
+  }
+  if (kind === "multiply" || kind === "cold_copies") {
+    if (!ccsColdCopiesOk(e.copies || e.replicas)) {
+      return ccsRefuse("CCS-MULTIPLY-COLD", "multiply cold copies");
+    }
+    return ccsPass("CCS-MULTIPLY-COLD");
+  }
+  if (kind === "erase_tip" || kind === "tip_erase") {
+    if (!ccsTipEraseOk(e.effort || e.via)) {
+      return ccsRefuse("CCS-TIP-EXPENSIVE", "tip expensive to erase");
+    }
+    return ccsPass("CCS-TIP-EXPENSIVE");
+  }
+  if (kind === "server_pull" || kind === "pull_wipe") {
+    if (e.wipe === true || e.wipe_cold === true || kind === "pull_wipe") {
+      return ccsRefuse("CCS-SERVER-PULL-NO-WIPE", "server pull cannot wipe cold replicas");
+    }
+    return ccsPass("CCS-SERVER-PULL-NO-WIPE", { wipe_cold: false });
+  }
+  if (kind === "poison") {
+    if (ccsHashAbsolutePoisonRefuse(e.hash, e.poison || e.poison_set)) {
+      return ccsRefuse("CCS-HASH-ABSOLUTE-POISON", "hash-absolute poison refuse");
+    }
+    return ccsPass("CCS-POISON-MISS");
+  }
+  if (kind === "creator_gone" || kind === "outlive") {
+    return ccsPass("CCS-DATA-OUTLIVES-CREATORS", { outlives: true });
+  }
+  return ccsRefuse("CCS-UNKNOWN", "unknown COLD-COPY SURVIVAL event");
 }
 
 export function meshPointer() {
@@ -354,11 +738,15 @@ export function meshPointer() {
     catalog_mcp: FRAGGATE_MCP,
     fraggate_slug: MESH_SLUG,
     origin: RUNTIME + MESH_PATH,
-    note: "PROXY to aziel-runtime /v1/mesh/* via AZIEL_RUNTIME. Not a local op. Not AnonBroadcast. Not AZMail's product-local ring. AZChat mesh hop default off. Product-local mesh_enable is stub/REFUSE. GET /v1/mesh never enables. Full node process is local qnm-node/. QNS-CD-1.0 photon QNS1 packet transfer is a hub cite only — local qnsd lives in qnm-node; no public qnsd proxy. " + MESH_NOTE,
+    note: "PROXY to aziel-runtime /v1/mesh/* via AZIEL_RUNTIME. Not a local op. Not AnonBroadcast. Not AZMail's product-local ring. AZChat mesh hop default off. Product-local mesh_enable is stub/REFUSE. GET /v1/mesh never enables. Full node process is local qnm-node/. QNS-CD-1.0 photon QNS1 packet transfer is a hub cite only — local qnsd lives in qnm-node; no public qnsd proxy. SPLIT THE WIRES + COLD-COPY SURVIVAL hub cites. " + MESH_NOTE,
     anon_broadcast: ANON_BROADCAST,
     anon_broadcast_publish_path: false,
     qns_cd_spec: QNS_CD_SPEC,
     qns_cd: QNS_CD,
+    stw_spec: STW_SPEC,
+    split_the_wires: STW,
+    ccs_spec: CCS_SPEC,
+    cold_copy_survival: CCS,
   };
 }
 

@@ -31,8 +31,9 @@ pytest is the dev extra. No network.
     `/v1/mesh/*` PROXY to aziel-runtime. Local ops are `/v1/{op}` only.
     Never treat `fraggate/call` or `mesh/status` as a local op name.
     Suite mesh default OFF; QNM rollup live|locked|isolated; QNS-CD-1.0
-    hub cite only (no public qnsd proxy); no Node Gate; no auto-heal;
-    not anonymity.
+    hub cite only (no public qnsd proxy); SPLIT THE WIRES + COLD-COPY
+    SURVIVAL hub cites; no Node Gate; no auto-heal; not anonymity.
+    Hop default off.
 9. New behavior needs a test that fails without the change.
 
 ## Where to change things
@@ -41,7 +42,7 @@ pytest is the dev extra. No network.
 - CLI: `azchat/cli.py`
 - Local UI: `azchat/ui.py`
 - Worker homepage: `workers/download-tracker/src/home.js`
-- Suite mesh / QNM Live Nodes + QNS-CD-1.0 cross-map: `workers/download-tracker/src/mesh.js`
+- Suite mesh / QNM Live Nodes + QNS-CD-1.0 + SPLIT THE WIRES + COLD-COPY SURVIVAL: `workers/download-tracker/src/mesh.js`
 
 ## License of contributions
 

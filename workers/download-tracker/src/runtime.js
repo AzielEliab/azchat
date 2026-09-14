@@ -34,7 +34,7 @@ import {
   importExport,
   refuseStub,
 } from "./engine.js";
-import { attachQnsCd, meshOpenApiPaths, meshPointer } from "./mesh.js";
+import { attachMeshCites, attachQnsCd, meshOpenApiPaths, meshPointer } from "./mesh.js";
 
 const HOST = "https://azchat-download-tracker.vibelock.workers.dev";
 const CATALOG = "https://aziel-runtime.vibelock.workers.dev/";
@@ -91,7 +91,7 @@ function mcpDocs() {
     spec: SPEC,
     door: "fraggate",
     kv_increment: false,
-    note: "GET /mcp documents the dual surface. POST /mcp is JSON-RPC thin doubles of catalog labels. Does not increment downloads. Canonical catalog MCP: " + CATALOG_MCP + " (FragGate slug azchat). Suite mesh: GET /v1/mesh PROXY (QNM-BUILD-1.0 live|locked|isolated; QNS-CD-1.0 hub cite). Catalog MCP mesh_* + FragGate slug=mesh. Default OFF. GET never enables. No Node Gate. No auto-heal. No public qnsd proxy. Not anonymity.",
+    note: "GET /mcp documents the dual surface. POST /mcp is JSON-RPC thin doubles of catalog labels. Does not increment downloads. Canonical catalog MCP: " + CATALOG_MCP + " (FragGate slug azchat). Suite mesh: GET /v1/mesh PROXY (QNM-BUILD-1.0 live|locked|isolated; QNS-CD-1.0 hub cite; SPLIT THE WIRES; COLD-COPY SURVIVAL). Catalog MCP mesh_* + FragGate slug=mesh. Default OFF. GET never enables. No Node Gate. No auto-heal. No public qnsd proxy. Not anonymity.",
     catalog_mcp: CATALOG_MCP,
     agent_path: FRAGGATE_CALL,
     live_ops: FRAGGATE_LIVE_OPS,
@@ -249,7 +249,7 @@ function openapiSpec() {
     info: {
       title: "AZChat",
       version: VERSION,
-      description: HONEST + " " + FULL_CLIENTS + " FragGate slug azchat. Catalog MCP " + CATALOG_MCP + ". Suite mesh GET /v1/mesh PROXY (QNM-BUILD-1.0; QNS-CD-1.0 hub cite; No Node Gate; No auto-heal; No public qnsd proxy).",
+      description: HONEST + " " + FULL_CLIENTS + " FragGate slug azchat. Catalog MCP " + CATALOG_MCP + ". Suite mesh GET /v1/mesh PROXY (QNM-BUILD-1.0; QNS-CD-1.0 hub cite; SPLIT THE WIRES; COLD-COPY SURVIVAL; No Node Gate; No auto-heal; No public qnsd proxy).",
       contact: { name: AUTHOR, url: "https://github.com/AzielEliab/azchat" },
       license: { name: "Apache-2.0", url: "https://www.apache.org/licenses/LICENSE-2.0" },
     },
@@ -316,7 +316,9 @@ async function decorateMeshCite(request, pathname, res, headers) {
     const body = await res.clone().json();
     headers.delete("content-length");
     headers.set("X-Aziel-Qns-Cd", "QNS-CD-1.0");
-    return new Response(JSON.stringify(attachQnsCd(body), null, 2), {
+    headers.set("X-Aziel-Stw", "STW-1.0");
+    headers.set("X-Aziel-Ccs", "CCS-1.0");
+    return new Response(JSON.stringify(attachMeshCites(body), null, 2), {
       status: res.status,
       statusText: res.statusText,
       headers,

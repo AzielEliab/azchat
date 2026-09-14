@@ -312,7 +312,7 @@ ${HUB_GODLOCK}
 
 POST /v1/handle_new, POST /v1/handle_rotate, POST /v1/room_open, POST /v1/room_post, POST /v1/room_pull, POST /v1/bus_send, POST /v1/bus_poll, POST /v1/verify_receipt, POST /v1/import_export, GET /v1/health, GET /v1/skill, GET /v1/doctor
 FragGate proxy: GET /v1/fraggate/list, GET /v1/fraggate/describe, POST /v1/fraggate/call (via AZIEL_RUNTIME)
-Suite mesh: GET ${HOST}/v1/mesh PROXY to aziel-runtime. Default OFF. GET never enables. Product-local mesh_enable is stub/REFUSE.
+Suite mesh: GET ${HOST}/v1/mesh PROXY to aziel-runtime. Default OFF. GET never enables. Product-local mesh_enable is stub/REFUSE. SPLIT THE WIRES + COLD-COPY SURVIVAL hub cites. Hop default off.
 Catalog LIVE_OPS: health, skill, doctor, handle_new, handle_rotate, room_open, room_post, room_pull, bus_send, bus_poll, verify_receipt, import_export
 MCP tools: azchat_health, azchat_skill, azchat_doctor, azchat_handle_new, azchat_handle_rotate, azchat_room_open, azchat_room_post, azchat_room_pull, azchat_bus_send, azchat_bus_poll, azchat_verify_receipt, azchat_import_export
 
@@ -501,9 +501,9 @@ export function renderHome(stats) {
 
     <div id="meshStrip" aria-label="Suite Live Nodes">
       <div class="live"><b id="meshLiveCount">0</b> Live Nodes</div>
-      <div id="meshLine">Suite mesh: off (default). QNM-BUILD-1.0. QNS-CD-1.0. Not an anonymity network.</div>
+      <div id="meshLine">Suite mesh: off (default). QNM-BUILD-1.0. QNS-CD-1.0. SPLIT THE WIRES. COLD-COPY SURVIVAL. Not an anonymity network.</div>
       <div class="rollup">live <b id="qnmLive">0</b> · locked <b id="qnmLocked">0</b> · isolated <b id="qnmIsolated">0</b></div>
-      <div>No Node Gate · No public qnsd proxy · No auto-heal · AZChat hop default off · Aziel Eliab only</div>
+      <div>No Node Gate · No public qnsd proxy · No auto-heal · SPLIT THE WIRES · COLD-COPY SURVIVAL · AZChat hop default off · Aziel Eliab only</div>
       <div>
         <input id="meshBearer" type="text" maxlength="80" placeholder="bearer (required to enable)" aria-label="mesh bearer">
         <button id="meshEnable" type="button" title="Suite proxy enable. Product-local mesh_enable is stub/REFUSE. GET never enables. Default off.">Enable</button>
@@ -511,7 +511,7 @@ export function renderHome(stats) {
         <button id="meshJoin" type="button" title="Join as azchat. Refused while mesh is OFF. No auto-join.">Join</button>
         <button id="meshLeave" type="button" title="Leave this node. No auto-heal.">Leave</button>
       </div>
-      <div id="meshProducts">Catalog MCP mesh_* · FragGate slug=mesh · /v1/mesh/* PROXY · QNS-CD-1.0 photon QNS1 (qnm-node local qnsd; hub cite only) · not AnonBroadcast · not AZMail ring · not a Node Gate · not a Softwares-tab product</div>
+      <div id="meshProducts">Catalog MCP mesh_* · FragGate slug=mesh · /v1/mesh/* PROXY · QNS-CD-1.0 photon QNS1 (qnm-node local qnsd; hub cite only) · SPLIT THE WIRES · COLD-COPY SURVIVAL · not AnonBroadcast · not AZMail ring · not a Node Gate · not a Softwares-tab product</div>
     </div>
 
     <section class="workspace" id="workspace">
@@ -781,14 +781,14 @@ export function renderHome(stats) {
       $("qnmLocked").textContent = String(locked);
       $("qnmIsolated").textContent = String(isolated);
       var line = $("meshLine");
-      if (on) line.textContent = "Suite mesh: on · live " + live + " · locked " + locked + " · isolated " + isolated + ". QNS-CD-1.0. Not an anonymity network.";
-      else if (j.status === "unavailable" || (j.ok === false && j.error)) line.textContent = "Suite mesh: off (unavailable). QNM-BUILD-1.0. QNS-CD-1.0. Not an anonymity network.";
-      else line.textContent = "Suite mesh: off (default). QNM-BUILD-1.0. QNS-CD-1.0. Not an anonymity network.";
+      if (on) line.textContent = "Suite mesh: on · live " + live + " · locked " + locked + " · isolated " + isolated + ". QNS-CD-1.0. SPLIT THE WIRES. COLD-COPY SURVIVAL. Not an anonymity network.";
+      else if (j.status === "unavailable" || (j.ok === false && j.error)) line.textContent = "Suite mesh: off (unavailable). QNM-BUILD-1.0. QNS-CD-1.0. SPLIT THE WIRES. COLD-COPY SURVIVAL. Not an anonymity network.";
+      else line.textContent = "Suite mesh: off (default). QNM-BUILD-1.0. QNS-CD-1.0. SPLIT THE WIRES. COLD-COPY SURVIVAL. Not an anonymity network.";
       var products = j.products_present || j.products || [];
       var names = Array.isArray(products) ? products.map(function (p) { return typeof p === "string" ? p : (p && (p.product || p.slug)) || ""; }).filter(Boolean) : [];
       var nodes = Array.isArray(j.nodes) ? j.nodes : [];
       var extra = names.length ? " · products " + names.join(", ") : (nodes.length ? " · " + nodes.length + " node labels" : "");
-      $("meshProducts").textContent = "Catalog MCP mesh_* · FragGate slug=mesh · /v1/mesh/* PROXY · QNS-CD-1.0 photon QNS1 (qnm-node local qnsd; hub cite only) · not AnonBroadcast · not AZMail ring · AZChat hop default off · not a Node Gate · not a Softwares-tab product" + extra;
+      $("meshProducts").textContent = "Catalog MCP mesh_* · FragGate slug=mesh · /v1/mesh/* PROXY · QNS-CD-1.0 photon QNS1 (qnm-node local qnsd; hub cite only) · SPLIT THE WIRES · COLD-COPY SURVIVAL · not AnonBroadcast · not AZMail ring · AZChat hop default off · not a Node Gate · not a Softwares-tab product" + extra;
     }
     async function meshGet(path) {
       var r = await fetch(path, { headers: { "user-agent": "Mozilla/5.0", accept: "application/json" } });

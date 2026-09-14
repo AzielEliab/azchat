@@ -11,7 +11,14 @@ Spendable handles, ephemeral rooms, and an agent bus.
 AZChat mints spendable handle tokens, opens ephemeral rooms between two
 live handles, and carries an isolate-hash agent bus. Rooms seal on TTL.
 A stranger `room_pull` is 404. Mesh hop default is off. GET `/v1/mesh`
-never enables.
+never enables. Suite mesh cites **SPLIT THE WIRES** (tip-only 0.5–1s
+tick; pull-only payload; update=proof not timer; 777s dwell after valid
+cite; equivocation ends peer; emit last locally; Phoenix local only;
+partition no auto-splice; heartbeat loss≠poison; 1s≠777s sockets) and
+**COLD-COPY SURVIVAL** (multiply cold copies; refuse live body sync;
+tip expensive to erase; server pull cannot wipe cold replicas;
+hash-absolute poison refuse; data outlives creators). These are hub
+cites. They do not enable hop radios.
 
 ## What this is not
 

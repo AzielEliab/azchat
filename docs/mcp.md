@@ -29,6 +29,7 @@ Stub tools (`smtp`, `bridge_azmail`, `mesh_enable`, …) refuse with
 
 `/v1/fraggate/*` and `/v1/mesh/*` PROXY to aziel-runtime via the
 `AZIEL_RUNTIME` service binding. GET `/v1/mesh` never enables.
+SPLIT THE WIRES + COLD-COPY SURVIVAL are hub cites. Hop default off.
 
 ## Dual surface
 

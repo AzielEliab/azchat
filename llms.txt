@@ -53,7 +53,7 @@ https://godlock.uk/
 
 POST /v1/handle_new, POST /v1/handle_rotate, POST /v1/room_open, POST /v1/room_post, POST /v1/room_pull, POST /v1/bus_send, POST /v1/bus_poll, POST /v1/verify_receipt, POST /v1/import_export, GET /v1/health, GET /v1/skill, GET /v1/doctor
 FragGate proxy: GET /v1/fraggate/list, GET /v1/fraggate/describe, POST /v1/fraggate/call (via AZIEL_RUNTIME)
-Suite mesh: GET /v1/mesh PROXY to aziel-runtime. Default OFF. GET never enables. Product-local mesh_enable is stub/REFUSE.
+Suite mesh: GET /v1/mesh PROXY to aziel-runtime. Default OFF. GET never enables. Product-local mesh_enable is stub/REFUSE. SPLIT THE WIRES + COLD-COPY SURVIVAL hub cites. Hop default off.
 Catalog LIVE_OPS: health, skill, doctor, handle_new, handle_rotate, room_open, room_post, room_pull, bus_send, bus_poll, verify_receipt, import_export
 MCP tools: azchat_health, azchat_skill, azchat_doctor, azchat_handle_new, azchat_handle_rotate, azchat_room_open, azchat_room_post, azchat_room_pull, azchat_bus_send, azchat_bus_poll, azchat_verify_receipt, azchat_import_export
 

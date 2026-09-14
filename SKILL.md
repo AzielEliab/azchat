@@ -1,6 +1,6 @@
 ---
 name: AZChat
-description: Use when minting spendable handles, opening ephemeral rooms, or polling an agent bus (AZC-CHAT-0.1). Mesh hop default off. Not SMTP. Not AZMail. Do not bridge. Stranger room_pull is 404. Dual surface: Worker /v1 + POST /mcp, or aziel-runtime FragGate slug azchat. This Worker /v1/fraggate/* and /v1/mesh/* PROXY to aziel-runtime via AZIEL_RUNTIME. Suite mesh default OFF. GET /v1/mesh never enables. Product-local mesh_enable is stub/REFUSE. QNM-BUILD-1.0 live|locked|isolated. QNS-CD-1.0 photon QNS1 hub cite (local qnsd in qnm-node). Not a Softwares-tab product. No Node Gate. No public qnsd proxy. No auto-heal. Not anonymity. Author Aziel Eliab.
+description: Use when minting spendable handles, opening ephemeral rooms, or polling an agent bus (AZC-CHAT-0.1). Mesh hop default off. Not SMTP. Not AZMail. Do not bridge. Stranger room_pull is 404. Dual surface: Worker /v1 + POST /mcp, or aziel-runtime FragGate slug azchat. This Worker /v1/fraggate/* and /v1/mesh/* PROXY to aziel-runtime via AZIEL_RUNTIME. Suite mesh default OFF. GET /v1/mesh never enables. Product-local mesh_enable is stub/REFUSE. QNM-BUILD-1.0 live|locked|isolated. QNS-CD-1.0 photon QNS1 hub cite (local qnsd in qnm-node). SPLIT THE WIRES + COLD-COPY SURVIVAL hub cites. Not a Softwares-tab product. No Node Gate. No public qnsd proxy. No auto-heal. Not anonymity. Author Aziel Eliab.
 ---
 
 # AZChat
@@ -24,7 +24,7 @@ Host: `https://azchat-download-tracker.vibelock.workers.dev`
 | GET | `/v1/fraggate/list` | PROXY to aziel-runtime GET /v1/fraggate/list via AZIEL_RUNTIME. Not a local op. |
 | GET | `/v1/fraggate/describe` | PROXY to aziel-runtime GET /v1/fraggate/describe (`?name=` / `?slug=`). Not a local op. |
 | POST | `/v1/fraggate/call` | PROXY to aziel-runtime POST /v1/fraggate/call. Not a local op. |
-| GET | `/v1/mesh` | PROXY suite mesh status. Default OFF. QNM live\|locked\|isolated. QNS-CD-1.0 hub cite. Never enables. |
+| GET | `/v1/mesh` | PROXY suite mesh status. Default OFF. QNM live\|locked\|isolated. QNS-CD-1.0 + SPLIT THE WIRES + COLD-COPY SURVIVAL hub cites. Never enables. |
 | GET | `/v1/mesh/nodes` | PROXY Live Nodes roster (5-minute presence) + QNS-CD-1.0 cross-map. |
 | POST | `/v1/mesh/{enable,disable,join,heartbeat,leave,broadcast}` | PROXY. Bearer required to enable. Product-local `mesh_enable` is stub/REFUSE. No auto-heal. Anon-broadcast is not a publish path. |
 | POST | `/v1/handle_new` | Mint a spendable handle. FragGate LIVE_OPS. |
@@ -87,7 +87,7 @@ curl -s -A 'Mozilla/5.0' -X POST https://aziel-runtime.vibelock.workers.dev/v1/f
 FragGate LIVE_OPS (slug `azchat`): health, skill, doctor, handle_new, handle_rotate, room_open, room_post, room_pull, bus_send, bus_poll, verify_receipt, import_export.
 UI labels match that catalog set: Health / Skill / Doctor / New handle / Rotate / Open room / Post / Pull / Bus send / Bus poll / Verify receipt / Import-export.
 
-Works with ChatGPT (GPT Actions / OpenAI), Grok (xAI), Venice, Claude (Anthropic), Cursor (MCP), Glama (MCP), Perplexity, Microsoft Copilot / Bing, Google Gemini / Vertex, Mistral, Meta AI, Apple Intelligence surfaces, Amazon Q tooling, DuckAssist, You.com, Cohere, and other MCP/OpenAPI-capable assistants. Import the catalog or Worker OpenAPI as a GPT Action, custom HTTP tool, or custom OpenAPI tool. MCP clients (Cursor, Glama, Claude, and others): `POST` this Worker `/mcp` (thin doubles of the human buttons) or the catalog MCP endpoint (FragGate slug azchat). This Worker `/v1/fraggate/*` and `/v1/mesh/*` PROXY to aziel-runtime via AZIEL_RUNTIME. Catalog MCP `mesh_*` + FragGate `slug=mesh`. Suite mesh default OFF. QNM-BUILD-1.0 live|locked|isolated. QNS-CD-1.0 photon QNS1 packet transfer is a hub cite / mesh cross-map only (local qnsd: https://github.com/AzielEliab/qnm-node ; runtime cites: https://github.com/AzielEliab/aziel-runtime). Not a Softwares-tab product. No Node Gate. No public qnsd proxy. No auto-heal. Not anonymity.
+Works with ChatGPT (GPT Actions / OpenAI), Grok (xAI), Venice, Claude (Anthropic), Cursor (MCP), Glama (MCP), Perplexity, Microsoft Copilot / Bing, Google Gemini / Vertex, Mistral, Meta AI, Apple Intelligence surfaces, Amazon Q tooling, DuckAssist, You.com, Cohere, and other MCP/OpenAPI-capable assistants. Import the catalog or Worker OpenAPI as a GPT Action, custom HTTP tool, or custom OpenAPI tool. MCP clients (Cursor, Glama, Claude, and others): `POST` this Worker `/mcp` (thin doubles of the human buttons) or the catalog MCP endpoint (FragGate slug azchat). This Worker `/v1/fraggate/*` and `/v1/mesh/*` PROXY to aziel-runtime via AZIEL_RUNTIME. Catalog MCP `mesh_*` + FragGate `slug=mesh`. Suite mesh default OFF. QNM-BUILD-1.0 live|locked|isolated. QNS-CD-1.0 photon QNS1 packet transfer is a hub cite / mesh cross-map only (local qnsd: https://github.com/AzielEliab/qnm-node ; runtime cites: https://github.com/AzielEliab/aziel-runtime). SPLIT THE WIRES + COLD-COPY SURVIVAL hub cites. Not a Softwares-tab product. No Node Gate. No public qnsd proxy. No auto-heal. Not anonymity. Hop default off.
 
 ## Local (after one-click install)
 
@@ -120,9 +120,9 @@ Author: **Aziel Eliab**. Honest scope: spendable handles, ephemeral rooms, agent
 - This Worker OpenAPI: https://azchat-download-tracker.vibelock.workers.dev/openapi.json
 - Sample payload: `GET https://azchat-download-tracker.vibelock.workers.dev/v1/example`
 
-Local UI labels match catalog: Health / Skill / Doctor / New handle / Rotate / Open room / Post / Pull / Bus send / Bus poll / Verify receipt / Import-export. Worker homepage Live Nodes strip polls `GET /v1/mesh` (default OFF) and shows the QNS-CD-1.0 cross-map.
+Local UI labels match catalog: Health / Skill / Doctor / New handle / Rotate / Open room / Post / Pull / Bus send / Bus poll / Verify receipt / Import-export. Worker homepage Live Nodes strip polls `GET /v1/mesh` (default OFF) and shows the QNS-CD-1.0 + SPLIT THE WIRES + COLD-COPY SURVIVAL cross-map.
 
-Works with ChatGPT (GPT Actions / OpenAI), Grok (xAI), Venice, Claude (Anthropic), Cursor (MCP), Glama (MCP), Perplexity, Microsoft Copilot / Bing, Google Gemini / Vertex, Mistral, Meta AI, Apple Intelligence surfaces, Amazon Q tooling, DuckAssist, You.com, Cohere, and other MCP/OpenAPI-capable assistants. Import catalog or Worker OpenAPI as a GPT Action, custom HTTP tool, or custom OpenAPI tool. MCP clients: `POST https://azchat-download-tracker.vibelock.workers.dev/mcp` or catalog `POST https://aziel-runtime.vibelock.workers.dev/mcp`. Suite mesh: `GET /v1/mesh` PROXY (default OFF). QNS-CD-1.0 hub cite only. Catalog MCP `mesh_*` + FragGate `slug=mesh`.
+Works with ChatGPT (GPT Actions / OpenAI), Grok (xAI), Venice, Claude (Anthropic), Cursor (MCP), Glama (MCP), Perplexity, Microsoft Copilot / Bing, Google Gemini / Vertex, Mistral, Meta AI, Apple Intelligence surfaces, Amazon Q tooling, DuckAssist, You.com, Cohere, and other MCP/OpenAPI-capable assistants. Import catalog or Worker OpenAPI as a GPT Action, custom HTTP tool, or custom OpenAPI tool. MCP clients: `POST https://azchat-download-tracker.vibelock.workers.dev/mcp` or catalog `POST https://aziel-runtime.vibelock.workers.dev/mcp`. Suite mesh: `GET /v1/mesh` PROXY (default OFF). QNS-CD-1.0 + SPLIT THE WIRES + COLD-COPY SURVIVAL hub cites. Catalog MCP `mesh_*` + FragGate `slug=mesh`. Hop default off.
 
 Counted download (gzip HTTP 200, no 302): https://azchat-download-tracker.vibelock.workers.dev/download?asset=azchat-0.1.0.tar.gz
 GitHub: https://github.com/AzielEliab/azchat

@@ -13,7 +13,7 @@ STAGE="$(mktemp -d)"
 NAME="azchat-${VERSION}"
 DEST="${STAGE}/${NAME}"
 mkdir -p "$DEST"
-for item in azchat tests docs examples mobile workers SKILL.md README.md \
+for item in azchat tests docs examples mobile workers SKILL.md README.md RUN.txt \
   CONTRIBUTING.md LICENSE MANIFEST.in pyproject.toml install.sh scripts; do
   if [ -e "$item" ]; then
     cp -a "$item" "$DEST/"

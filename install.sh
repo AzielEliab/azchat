@@ -27,6 +27,6 @@ python -m pip install -e .
 
 echo
 echo "Installed AZChat."
-echo "Run:  azchat ui"
-echo "Then open http://127.0.0.1:8878  (loopback only)"
-echo "Mesh hop default off. Not SMTP. Not AZMail. Author: Aziel Eliab."
+echo "Next: azchat ui"
+echo "Open http://127.0.0.1:8878/"
+echo "Author: Aziel Eliab."

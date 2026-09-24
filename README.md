@@ -1,29 +1,35 @@
 # AZChat
 
-Open-source **spendable handles, ephemeral rooms, and an agent bus**
-(AZC-CHAT-0.1). Mesh hop default off. **Not SMTP. Not AZMail.** FragGate
-only. Stranger `room_pull` is 404.
+Open short-lived rooms with spendable handles.
 
 **Author:** Aziel Eliab only  
-**Also in SEO:** Aziel Elroi Eliab  
 **Date:** September 2026 · v0.1.0  
-**License:** [Apache-2.0](LICENSE)  
-**Class:** Plain · slug `azchat` · spec AZC-CHAT-0.1 · domain Comms (07)
+**License:** [Apache-2.0](LICENSE)
 
-> Handles spend. Rooms seal. Mesh stays off.
+## Start
 
-See the spec: [docs/whitepaper.md](docs/whitepaper.md) ·
-[docs/mcp.md](docs/mcp.md).
-How to contribute: [CONTRIBUTING.md](CONTRIBUTING.md).
+1. Install: `python -m venv .venv && source .venv/bin/activate && pip install -e .`
+2. Run: `azchat ui`
+3. Open http://127.0.0.1:8878/
 
-**Forks are welcome and always allowed.**
+`azchat` with no arguments prints those next steps. `azchat doctor` checks this install.
 
-## Quick start
+## Commands
 
-```bash
-python -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"
-azchat ui
-```
+| Command | What it does |
+| --- | --- |
+| `azchat ui` | Open the local app on this computer |
+| `azchat handle-new --label me` | Create a spendable handle |
+| `azchat room-open` | Open a room with two handles |
+| `azchat room-post` | Send a message into a room |
+| `azchat room-pull` | Read messages in a room |
+| `azchat doctor` | Check this install |
+| `azchat --help` | Command list and examples |
+| `azchat health --json` | Machine JSON |
+
+Advanced commands stay available: `handle-rotate`, `bus-send`, `bus-poll`, `verify`, `export`, `stub`.
+
+Commands share a session file on this computer (`~/.local/state/azchat/state.json`, or the `AZCHAT_STATE` path). `azchat ui` uses that same file. Set `AZCHAT_STATE=-` to keep a command from reading or writing it.
 
 ## One-click install
 
@@ -33,7 +39,7 @@ curl -fsSL https://azchat-download-tracker.vibelock.workers.dev/install.sh | bas
 
 The script curls the **counted** tarball from this project's Worker
 (`/download`, User-Agent `Mozilla/5.0`), extracts, makes a venv, and
-`pip install -e .`. Then run `azchat ui`.
+`pip install -e .`. Then run `azchat ui` and open http://127.0.0.1:8878/.
 
 Or use the live software homepage (workspace + counted download):
 https://azchat-download-tracker.vibelock.workers.dev/
@@ -80,9 +86,10 @@ Direct tarball (also counted): [azchat-0.1.0.tar.gz](https://azchat-download-tra
 azchat ui
 ```
 
-Then open http://127.0.0.1:8878 on this computer only. Catalog labels:
-Health / Skill / Doctor / New handle / Rotate / Open room / Post / Pull /
-Bus send / Bus poll / Verify receipt / Import-export.
+Open http://127.0.0.1:8878 on this computer only. The first screen has one
+primary action. Rotate, the agent bus, receipt check, and export are under
+Advanced. Catalog labels: Health / Skill / Doctor / New handle / Rotate /
+Open room / Post / Pull / Bus send / Bus poll / Verify receipt / Import-export.
 
 ## Dual-surface law
 
@@ -164,7 +171,9 @@ Dedicated DOWNLOADS KV `AZCHAT_DOWNLOADS` (`01a3bbf8ad5e449eb0eb7648d75f8ae0`)
 — do not reuse other products' KV ids. Service bind `AZIEL_RUNTIME` →
 `aziel-runtime`. Coordinator deploys if OAuth is missing.
 
-## Honest banner
+## Scope
+
+Not SMTP. Not AZMail. Do not bridge AZChat ↔ AZMail.
 
 THIS IS: AZChat spendable handles, ephemeral rooms (TTL/sealed), and an
 agent bus. Reached only through FragGate. mesh_enabled_default is false.

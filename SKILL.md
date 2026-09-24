@@ -97,7 +97,7 @@ azchat ui
 azchat doctor
 ```
 
-Then open http://127.0.0.1:8878 (this computer only).
+Then open http://127.0.0.1:8878 (this computer only). Handles and rooms from the local CLI and `azchat ui` stay in the session file on this computer.
 
 ## Honest banner
 

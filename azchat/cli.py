@@ -26,6 +26,9 @@ from azchat.engine import (
     handle_rotate,
     health,
     import_export,
+    room_host,
+    room_join,
+    room_list,
     room_open,
     room_post,
     room_pull,
@@ -67,6 +70,9 @@ commands:
   room-open       Open a room with two handles
   room-post       Send a message into a room
   room-pull       Read messages in a room
+  room-list       Show hosted rooms
+  room-host       Host a room on the all-rooms list
+  room-join       Join a room from that list
   doctor          Check this install
   health          Show whether AZChat is up
   skill           Print the skill notes
@@ -221,6 +227,26 @@ def _humanize(data: dict[str, Any]) -> str:
                 "This room is sealed.",
                 "Try: azchat room-open --help",
             ),
+            "room-missing": (
+                "That room is not on the all-rooms list.",
+                "Try: azchat room-list",
+            ),
+            "passphrase-required": (
+                "A private room needs a passphrase. No join.",
+                "Try: azchat room-join --token TOKEN --room-id ROOM --passphrase PASSPHRASE",
+            ),
+            "passphrase-rejected": (
+                "That passphrase did not match. No join.",
+                "Try the passphrase again. Private is not end-to-end encryption.",
+            ),
+            "passphrase-too-long": (
+                "That passphrase is longer than 128 characters. No join.",
+                "Try a shorter passphrase.",
+            ),
+            "private-flag-required": (
+                "A passphrase was sent without --private. No room was created.",
+                "Try: azchat room-host --token TOKEN --private --passphrase PASSPHRASE",
+            ),
             "empty-post": (
                 "The message was empty.",
                 'Try: azchat room-post --token TOKEN --room-id ROOM --text "hello"',
@@ -323,6 +349,53 @@ def _humanize(data: dict[str, Any]) -> str:
             lines.append("")
             lines.append('Next: azchat room-post --token TOKEN --room-id ROOM --text "hello"')
         return "\n".join(lines) + "\n"
+    if op == "room_list":
+        rooms = data.get("rooms") if isinstance(data.get("rooms"), list) else []
+        lines = [
+            "All rooms.",
+            "op: room_list",
+            f"rooms: {data.get('count', len(rooms))}",
+        ]
+        for room in rooms:
+            if not isinstance(room, dict):
+                continue
+            gate = "passphrase required" if room.get("private") else "open entry"
+            lines.append(f"  - {room.get('title') or 'room'}  {room.get('room_id')}  {gate}")
+        if not rooms:
+            lines.append("")
+            lines.append("Next: azchat room-host --token TOKEN --title hall")
+        lines.append("")
+        lines.append("Private means a passphrase is required to join. It is not end-to-end encryption.")
+        return "\n".join(lines) + "\n"
+    if op == "room_host":
+        private = data.get("private") is True
+        return (
+            "Room hosted.\n"
+            "op: room_host\n"
+            f"room id: {data.get('room_id')}\n"
+            f"title: {data.get('title')}\n"
+            f"entry: {'passphrase required' if private else 'open'}\n"
+            f"closes: {data.get('expires_at')}\n"
+            "\n"
+            "The room is on the all-rooms list.\n"
+            + (
+                "Private means a passphrase is required to join. It is not end-to-end encryption.\n"
+                if private
+                else "Next: azchat room-list\n"
+            )
+        )
+    if op == "room_join":
+        return (
+            "Joined.\n"
+            if data.get("joined")
+            else "Already in this room.\n"
+        ) + (
+            "op: room_join\n"
+            f"room id: {data.get('room_id')}\n"
+            f"title: {data.get('title')}\n"
+            "\n"
+            'Next: azchat room-post --token TOKEN --room-id ROOM --text "hello"\n'
+        )
     if op == "bus_send":
         frame = data.get("frame") if isinstance(data.get("frame"), dict) else {}
         return (
@@ -417,6 +490,20 @@ def build_parser() -> AzChatParser:
     rpl.add_argument("--token", required=True, help="Member handle token.")
     rpl.add_argument("--room-id", required=True, help="Room id.")
 
+    sub.add_parser("room-list", help="Show hosted rooms. The list has no passphrase.")
+
+    rh = sub.add_parser("room-host", help="Host a room on the all-rooms list.")
+    rh.add_argument("--token", required=True, help="Live handle token for the host.")
+    rh.add_argument("--title", default="room", help="Room title shown on the list.")
+    rh.add_argument("--private", action="store_true", help="Require a passphrase to join.")
+    rh.add_argument("--passphrase", default=None, help="Passphrase for a private room. Not printed back.")
+    rh.add_argument("--ttl-ms", type=int, default=900000, help="How long the room stays open, in milliseconds.")
+
+    rj = sub.add_parser("room-join", help="Join a listed room. A private room needs the passphrase.")
+    rj.add_argument("--token", required=True, help="Live handle token.")
+    rj.add_argument("--room-id", required=True, help="Room id from room-list.")
+    rj.add_argument("--passphrase", default=None, help="Passphrase when the room is private. Not printed back.")
+
     bs = sub.add_parser("bus-send", help="Send a frame on the agent bus.")
     bs.add_argument("--from-agent", dest="from_agent", default="agent-a", help="Sender name.")
     bs.add_argument("--to", default="agent-b", help="Recipient name.")
@@ -478,6 +565,9 @@ def main(argv: list[str] | None = None) -> int:
         "room-open",
         "room-post",
         "room-pull",
+        "room-list",
+        "room-host",
+        "room-join",
         "bus-send",
         "bus-poll",
         "export",
@@ -519,6 +609,18 @@ def main(argv: list[str] | None = None) -> int:
             )
         if args.cmd == "room-pull":
             return emit(room_pull({"token": args.token, "room_id": args.room_id}), as_json)
+        if args.cmd == "room-list":
+            return emit(room_list({}), as_json)
+        if args.cmd == "room-host":
+            body = {"token": args.token, "title": args.title, "private": args.private, "ttl_ms": args.ttl_ms}
+            if args.passphrase is not None:
+                body["passphrase"] = args.passphrase
+            return emit(room_host(body), as_json)
+        if args.cmd == "room-join":
+            body = {"token": args.token, "room_id": args.room_id}
+            if args.passphrase is not None:
+                body["passphrase"] = args.passphrase
+            return emit(room_join(body), as_json)
         if args.cmd == "bus-send":
             return emit(bus_send({"from": args.from_agent, "to": args.to, "text": args.text}), as_json)
         if args.cmd == "bus-poll":

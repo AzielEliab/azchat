@@ -35,7 +35,17 @@ OpenAPI + MCP pointer at runtime FragGate.
 ## LIVE_OPS
 
 health, skill, doctor, handle_new, handle_rotate, room_open, room_post,
-room_pull, bus_send, bus_poll, verify_receipt, import_export.
+room_pull, room_list, room_host, room_join, bus_send, bus_poll,
+verify_receipt, import_export.
+
+`room_host` puts a room on the all-rooms list. `room_join` enters a listed
+room. A private room stores a PBKDF2-HMAC-SHA-256 verifier only. A wrong
+or missing passphrase does not join, and the passphrase is not in the
+public list. Private means passphrase-gated entry. It is not end-to-end
+encryption. Pairwise `room_open` stays off the list. `room_list`,
+`room_host`, and `room_join` are served by this Worker and the local
+engine. This repository does not change the aziel-runtime FragGate
+describe card.
 
 Stubs refuse with `AZC-CHAT-REFUSE`.
 

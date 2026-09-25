@@ -108,6 +108,19 @@ _PAGE = """<!DOCTYPE html>
   @media (max-width: 420px) {
     button.primary { width: 100%; }
   }
+  input[type="password"] {
+    width: 100%; max-width: 100%; padding: 0.6rem 0.7rem;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: var(--bg); color: var(--ink); font: inherit;
+  }
+  label.check { display: flex; align-items: center; gap: 0.45rem; }
+  label.check input { width: auto; }
+  #room-list { list-style: none; margin: 0.7rem 0 0; padding: 0; }
+  #room-list li {
+    display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem; align-items: center;
+    border: 1px solid var(--line); border-radius: 12px; padding: 0.55rem 0.7rem;
+    margin: 0 0 0.4rem; background: var(--bg);
+  }
   .cards { display: grid; gap: 0.75rem; margin: 0 0 1.25rem; }
   @media (min-width: 720px) {
     .cards { grid-template-columns: 1fr 1fr; }
@@ -184,6 +197,20 @@ _PAGE = """<!DOCTYPE html>
         <textarea id="message">Hello</textarea>
       </section>
       <section id="thread" hidden></section>
+      <section class="composer" id="rooms">
+        <h2>All rooms</h2>
+        <p class="meta">Host a room to put it on this list. Private means a passphrase is required to join. It is not end-to-end encryption. Lamb Lens Service → Clarity → Peace.</p>
+        <label for="room_title">Room title</label>
+        <input id="room_title" type="text" value="hall" maxlength="80">
+        <label class="check" for="room_private"><input id="room_private" type="checkbox"> Private room — passphrase required to join</label>
+        <label for="room_pass">Passphrase</label>
+        <input id="room_pass" type="password" autocomplete="new-password" placeholder="required only when the room is private">
+        <div class="adv-actions">
+          <button type="button" id="btn-host">Host room</button>
+          <button type="button" class="ghost" id="btn-rooms">Refresh list</button>
+        </div>
+        <ul id="room-list" aria-label="All rooms"></ul>
+      </section>
       <details id="advanced">
         <summary>Advanced</summary>
         <div class="stack two">
@@ -288,6 +315,11 @@ _PAGE = """<!DOCTYPE html>
           "need-two-handles": "A room needs two different handles. Create the second handle.",
           "stranger-or-missing": "That room does not include this handle. Use a member token, or open a room.",
           "room-sealed": "This room is sealed. Open a new room.",
+          "room-missing": "That room is not on the all-rooms list.",
+          "passphrase-required": "A private room needs a passphrase. No join.",
+          "passphrase-rejected": "That passphrase did not match. No join.",
+          "passphrase-too-long": "That passphrase is longer than 128 characters. No join.",
+          "private-flag-required": "A passphrase was sent without marking the room private. No room was created.",
           "empty-post": "Write a message, then send it.",
           "empty-frame": "Write a message, then send it on the bus."
         };
@@ -298,6 +330,9 @@ _PAGE = """<!DOCTYPE html>
       if (data.op === "room_open") return "Room is open. Write a message, then send it.";
       if (data.op === "room_post") return "Message sent.";
       if (data.op === "room_pull") return (data.posts ? data.posts.length : 0) + " message(s) in this room.";
+      if (data.op === "room_list") return (data.count || 0) + " hosted room(s). Private means a passphrase is required to join. It is not end-to-end encryption.";
+      if (data.op === "room_host") return data.private ? "Private room is on the list. A passphrase is required to join. It is not end-to-end encryption." : "Room is on the all-rooms list.";
+      if (data.op === "room_join") return data.joined ? "Joined. You can send a message." : "You are already in this room.";
       if (data.op === "bus_send") return "Bus frame sent.";
       if (data.op === "bus_poll") return (data.count || 0) + " bus frame(s). Open Response details to read them.";
       if (data.op === "verify_receipt") return data.match ? "Receipt matches." : "Receipt does not match.";
@@ -343,7 +378,8 @@ _PAGE = """<!DOCTYPE html>
         }
       }
       if (data && data.token && data.op === "handle_rotate") $("token_a").value = data.token;
-      if (data && data.room_id && data.op === "room_open") $("room_id").value = data.room_id;
+      if (data && data.room_id && (data.op === "room_open" || data.op === "room_host" || data.op === "room_join")) $("room_id").value = data.room_id;
+      if (data && data.ok !== false && (data.op === "room_host" || data.op === "room_join") && $("room_pass")) $("room_pass").value = "";
       if (data && data.op === "room_pull") renderPosts(data.posts || []);
       if (data && data.op === "room_post" && data.post) renderPosts([data.post]);
       syncPrimary();
@@ -366,6 +402,23 @@ _PAGE = """<!DOCTYPE html>
       if (path === "/v1/skill") return { ok: true, op: "skill", skill: await res.text() };
       return res.json();
     }
+    function esc(s) {
+      return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+    async function refreshRooms() {
+      var data = await api("/v1/room_list", {});
+      var list = $("room-list");
+      var rooms = (data && data.rooms) || [];
+      if (!rooms.length) {
+        list.innerHTML = "<li>No hosted rooms yet.</li>";
+        return data;
+      }
+      list.innerHTML = rooms.map(function (room) {
+        var gate = room.private ? "private · passphrase required" : "open entry";
+        return '<li><strong>' + esc(room.title || "room") + '</strong> <code>' + esc(room.room_id) + '</code> <span>' + esc(gate) + '</span> <span>' + esc(room.member_count) + ' members</span> <button type="button" data-join="' + esc(room.room_id) + '" data-private="' + (room.private ? "1" : "0") + '">Join</button></li>';
+      }).join("");
+      return data;
+    }
     async function run(act) {
       var text = $("message").value || $("post_text").value;
       $("post_text").value = text;
@@ -373,6 +426,15 @@ _PAGE = """<!DOCTYPE html>
       if (act === "handle-b") return show(await api("/v1/handle_new", { label: $("label_b").value }));
       if (act === "rotate") return show(await api("/v1/handle_rotate", { token: $("token_a").value }));
       if (act === "room") return show(await api("/v1/room_open", { token_a: $("token_a").value, token_b: $("token_b").value }));
+      if (act === "host") {
+        var body = { token: $("token_a").value, title: $("room_title").value, private: $("room_private").checked };
+        if ($("room_private").checked) body.passphrase = $("room_pass").value;
+        var hosted = await api("/v1/room_host", body);
+        show(hosted);
+        await refreshRooms();
+        return;
+      }
+      if (act === "rooms") return show(await refreshRooms());
       if (act === "post") {
         var posted = await api("/v1/room_post", { token: $("token_a").value, room_id: $("room_id").value, text: text });
         show(posted);
@@ -402,6 +464,18 @@ _PAGE = """<!DOCTYPE html>
     $("btn-handle-b").onclick = function () { run("handle-b"); };
     $("btn-rotate").onclick = function () { run("rotate"); };
     $("btn-room").onclick = function () { run("room"); };
+    $("btn-host").onclick = function () { run("host"); };
+    $("btn-rooms").onclick = function () { run("rooms"); };
+    $("room-list").addEventListener("click", function (ev) {
+      var btn = ev.target.closest ? ev.target.closest("button[data-join]") : null;
+      if (!btn) return;
+      var body = { token: $("token_a").value, room_id: btn.getAttribute("data-join") };
+      if (btn.getAttribute("data-private") === "1") body.passphrase = $("room_pass").value;
+      api("/v1/room_join", body).then(function (data) {
+        show(data);
+        return refreshRooms();
+      }).catch(function (err) { setStatus(String(err.message || err), "bad"); });
+    });
     $("btn-post").onclick = function () { run("post"); };
     $("btn-pull").onclick = function () { run("pull"); };
     $("btn-bus-send").onclick = function () { run("bus-send"); };
@@ -438,6 +512,7 @@ _PAGE = """<!DOCTYPE html>
         if (pulled && pulled.posts) renderPosts(pulled.posts);
         if (pulled && pulled.ok !== false) setStatus("Room is open. Write a message, then send it.", "ok");
       }
+      await refreshRooms();
     }
     hydrate().catch(function () {
       setStatus("The session could not be read. You can still create a handle.", "bad");
@@ -529,6 +604,13 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/v1/doctor":
             self._json(doctor())
+            return
+        if path == "/v1/room_list":
+            problem = self._remember()
+            if problem:
+                self._json({"ok": False, "error": problem}, 400)
+                return
+            self._json(dispatch("room_list", {}))
             return
         if path == "/v1/skill":
             from pathlib import Path

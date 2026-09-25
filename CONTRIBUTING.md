@@ -24,7 +24,7 @@ pytest is the dev extra. No network.
 2. **I1 Mesh hop default off.** GET `/v1/mesh` never enables.
 3. **I2 Not SMTP.** Not a public MTA.
 4. **I3 Not AZMail.** Do not bridge AZChat ↔ AZMail.
-5. **I4** Stranger `room_pull` is 404.
+5. **I4** Stranger `room_pull` is 404. Hosted rooms (`room_host`) appear on `room_list`. A private room fails closed when the passphrase is missing or wrong. Do not put the passphrase in list metadata, receipts, or logs. Private is not end-to-end encryption.
 6. **I5** FragGate is THE single door.
 7. **I6** Identity is Aziel Eliab only.
 8. **Door vs local op.** `/v1/fraggate/*`, `/v1/runtime/*`, and

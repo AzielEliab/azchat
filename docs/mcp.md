@@ -21,8 +21,14 @@ JSON-RPC: `initialize`, `tools/list`, `tools/call`, `ping`.
 
 Tools: `azchat_health`, `azchat_skill`, `azchat_doctor`,
 `azchat_handle_new`, `azchat_handle_rotate`, `azchat_room_open`,
-`azchat_room_post`, `azchat_room_pull`, `azchat_bus_send`,
+`azchat_room_post`, `azchat_room_pull`, `azchat_room_list`,
+`azchat_room_host`, `azchat_room_join`, `azchat_bus_send`,
 `azchat_bus_poll`, `azchat_verify_receipt`, `azchat_import_export`.
+
+`room_list` returns hosted-room metadata only. `room_host` creates a
+listed room. `room_join` fails closed on a private room when the
+passphrase is missing or wrong. The passphrase is not returned and is
+not on the public list. Private is not end-to-end encryption.
 
 Stub tools (`smtp`, `bridge_azmail`, `mesh_enable`, …) refuse with
 `AZC-CHAT-REFUSE`.

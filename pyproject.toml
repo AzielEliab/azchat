@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "azchat"
 version = "0.1.0"
-description = "AZChat: spendable handles, ephemeral rooms, agent bus (AZC-CHAT-0.1). Mesh hop default off. Not SMTP. Not AZMail. FragGate only. Author Aziel Eliab."
+description = "AZChat opens short-lived rooms with spendable handles. Author: Aziel Eliab."
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [{name = "Aziel Eliab"}]

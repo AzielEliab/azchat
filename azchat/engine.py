@@ -105,6 +105,28 @@ def reset_azchat_store() -> None:
     _store["seq"] = 0
 
 
+def session_snapshot() -> dict[str, Any]:
+    return {
+        "handles": _store["handles"],
+        "rooms": _store["rooms"],
+        "bus": _store["bus"],
+        "seq": _store["seq"],
+    }
+
+
+def session_restore(data: dict[str, Any]) -> None:
+    handles = data.get("handles")
+    rooms = data.get("rooms")
+    bus = data.get("bus")
+    _store["handles"] = dict(handles) if isinstance(handles, dict) else {}
+    _store["rooms"] = dict(rooms) if isinstance(rooms, dict) else {}
+    _store["bus"] = list(bus) if isinstance(bus, list) else []
+    try:
+        _store["seq"] = int(data.get("seq") or 0)
+    except (TypeError, ValueError):
+        _store["seq"] = 0
+
+
 def now_ms() -> int:
     return int(time.time() * 1000)
 

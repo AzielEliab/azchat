@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import json
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -11,13 +12,14 @@ from urllib.parse import urlparse
 from azchat import __version__
 from azchat.engine import HONEST, LIVE_OPS, dispatch, doctor, health, skill_markdown
 from azchat.errors import AzChatError
+from azchat.session import load_session, save_session, session_path, session_view
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8878
 LOOPBACK = frozenset({"127.0.0.1", "localhost", "::1"})
 MAX_BODY = 2 * 1024 * 1024
 
-PAGE = r"""<!DOCTYPE html>
+_PAGE = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -25,128 +27,337 @@ PAGE = r"""<!DOCTYPE html>
 <title>AZChat</title>
 <style>
   :root {
-    --bg: #0b0b0b; --panel: #141414; --ink: #e8e0d0; --muted: #8a7219;
-    --line: #2a2414; --gold: #c9a227; --focus: #e6d19a; --bad: #d4534b;
-    --pass: #3dba7a;
+    color-scheme: light;
+    --bg: #f4f0e6;
+    --panel: #fffdf8;
+    --ink: #1a1814;
+    --muted: #5e584e;
+    --line: #e4d9c4;
+    --gold: #c9a227;
+    --gold-ink: #1a1408;
+    --bad: #8c2f2a;
+    --bad-bg: #f8ece8;
+    --pass: #1d6b42;
+    --pass-bg: #e7f4ec;
+    --shadow: 0 1px 0 rgba(26, 24, 20, 0.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #12110e;
+      --panel: #1c1b17;
+      --ink: #f4efe4;
+      --muted: #cfc6b4;
+      --line: #3c362c;
+      --gold: #c9a227;
+      --gold-ink: #1a1408;
+      --bad: #f0b2ac;
+      --bad-bg: #3a2422;
+      --pass: #9ed8b6;
+      --pass-bg: #1c3328;
+      --shadow: none;
+    }
   }
   * { box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0; background: var(--bg); color: var(--ink);
-    font-family: system-ui, "Segoe UI", sans-serif; line-height: 1.45;
+  html, body { margin: 0; padding: 0; max-width: 100%; overflow-x: hidden; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, "Segoe UI", sans-serif;
+    line-height: 1.5;
+    min-height: 100vh;
   }
-  body { max-width: 52rem; margin: 0 auto; padding: 2.1rem 1.2rem 4rem; }
-  .tag {
-    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.72rem;
-    letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold);
+  .wrap { max-width: 40rem; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+  @media (min-width: 800px) {
+    .wrap { padding: 2.5rem 1.5rem 4rem; }
   }
-  h1 { font-size: 2rem; font-weight: 650; letter-spacing: 0.04em; margin: 0.35rem 0 0.25rem; }
-  .motto { color: var(--gold); font-style: italic; margin: 0 0 0.85rem; font-size: 1.05rem; }
-  .lede { color: #b8b09a; margin: 0 0 1.5rem; max-width: 44rem; }
-  fieldset {
-    border: 1px solid var(--line); border-radius: 10px; background: var(--panel);
-    padding: 1.1rem 1.15rem 1.2rem; margin: 0 0 1rem;
+  .bar {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 1rem; margin-bottom: 1.75rem;
   }
-  legend {
-    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.72rem;
-    letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); padding: 0 0.4rem;
+  .mark { margin: 0; font-size: 0.95rem; font-weight: 700; letter-spacing: 0.01em; }
+  .by { margin: 0.1rem 0 0; color: var(--muted); font-size: 0.85rem; }
+  .pill {
+    margin: 0; color: var(--muted); font-size: 0.82rem;
+    border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.65rem;
+    background: var(--panel);
   }
-  label { display: block; font-size: 0.92rem; margin: 0.85rem 0 0.3rem; }
-  textarea, input[type="text"] {
-    width: 100%; padding: 0.55rem 0.65rem; border: 1px solid var(--line);
-    border-radius: 6px; background: #101010; color: var(--ink); font: inherit;
+  h1 { font-size: 1.85rem; font-weight: 650; letter-spacing: -0.02em; margin: 0 0 0.4rem; }
+  h2 { font-size: 1rem; margin: 0 0 0.35rem; }
+  .lede { margin: 0 0 1.25rem; max-width: 36rem; color: var(--ink); }
+  .status {
+    margin: 0 0 1rem; padding: 0.8rem 0.9rem; border-radius: 12px;
+    background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow);
   }
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
-  .actions { display: flex; gap: 0.65rem; flex-wrap: wrap; margin: 0.9rem 0 0; }
+  .status.ok { color: var(--pass); background: var(--pass-bg); border-color: transparent; }
+  .status.bad { color: var(--bad); background: var(--bad-bg); border-color: transparent; }
+  .actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0 0 1.25rem; }
+  button, summary {
+    font: inherit; font-weight: 650; cursor: pointer;
+  }
   button {
-    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.85rem;
-    letter-spacing: 0.04em; padding: 0.65rem 1rem; border-radius: 8px;
-    border: 1px solid var(--gold); background: var(--gold); color: var(--bg);
-    cursor: pointer; font-weight: 650;
+    min-height: 2.75rem; padding: 0.55rem 1rem; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--ink);
   }
-  button.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
-  .banner {
-    border: 1px solid #5c4a1a; background: #241c0d; color: #f0d78c;
-    padding: 0.85rem 1rem; border-radius: 10px; margin: 0 0 1.15rem; font-size: 0.92rem;
+  button.primary { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); }
+  button.ghost { background: transparent; }
+  button:focus-visible, summary:focus-visible, a:focus-visible,
+  input:focus-visible, textarea:focus-visible {
+    outline: 3px solid #c9a227; outline-offset: 2px;
   }
-  .status { margin: 0 0 0.8rem; padding: 0.75rem 0.85rem; border-radius: 10px; border: 1px solid var(--line); }
-  .status.ok { color: var(--pass); border-color: #2f6b48; }
-  .status.bad { color: var(--bad); border-color: #7a2f2c; }
-  pre { background: #101010; padding: 0.75rem 0.9rem; overflow: auto; border-radius: 8px; font-size: 0.78rem; }
+  @media (max-width: 420px) {
+    button.primary { width: 100%; }
+  }
+  .cards { display: grid; gap: 0.75rem; margin: 0 0 1.25rem; }
+  @media (min-width: 720px) {
+    .cards { grid-template-columns: 1fr 1fr; }
+  }
+  article.card, .composer, details {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 0.9rem 1rem; box-shadow: var(--shadow);
+  }
+  .token {
+    display: block; margin: 0.35rem 0 0; font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.82rem; word-break: break-all;
+  }
+  label { display: block; font-size: 0.92rem; margin: 0.75rem 0 0.3rem; }
+  textarea, input[type="text"], input[type="number"] {
+    width: 100%; max-width: 100%; padding: 0.6rem 0.7rem;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: var(--bg); color: var(--ink); font: inherit;
+  }
+  textarea { min-height: 5.5rem; resize: vertical; }
+  .composer { margin: 0 0 1.25rem; }
+  #thread { display: grid; gap: 0.6rem; margin: 0 0 1.25rem; }
+  .post { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 0.75rem 0.9rem; }
+  .post p { margin: 0; }
+  .meta { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.25rem !important; }
+  details { margin: 0 0 0.8rem; }
+  summary { padding: 0.15rem 0; }
+  .stack { display: grid; gap: 0.75rem; }
+  @media (min-width: 720px) {
+    .stack.two { grid-template-columns: 1fr 1fr; }
+  }
+  .adv-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.9rem; }
+  pre {
+    margin: 0.8rem 0 0; padding: 0.75rem 0.85rem; border-radius: 10px;
+    background: var(--bg); overflow: auto; white-space: pre-wrap; word-break: break-word;
+    font-size: 0.78rem; max-width: 100%;
+  }
+  .about p { margin: 0.4rem 0; color: var(--muted); }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
-  <p class="tag">AZC-CHAT-0.1 · Plain · Comms · Aziel Eliab</p>
-  <h1>AZChat</h1>
-  <p class="motto">Handles spend. Rooms seal. Mesh stays off.</p>
-  <p class="lede">Loopback only. FragGate LIVE_OPS: health, skill, doctor, handle_new, handle_rotate, room_open, room_post, room_pull, bus_send, bus_poll, verify_receipt, import_export. Mesh hop default off. Not SMTP. Not AZMail. Do not bridge. Stranger room_pull is 404.</p>
-  <p class="banner">__HONEST__</p>
-  <fieldset>
-    <legend>Workspace</legend>
-    <div class="row2">
+  <div class="wrap">
+    <header class="bar">
       <div>
-        <label>Handle A label</label>
-        <input id="label_a" type="text" value="agent-a">
-        <label>Handle A token</label>
-        <input id="token_a" type="text" placeholder="minted token">
+        <p class="mark">AZChat</p>
+        <p class="by">Aziel Eliab</p>
       </div>
-      <div>
-        <label>Handle B label</label>
-        <input id="label_b" type="text" value="agent-b">
-        <label>Handle B token</label>
-        <input id="token_b" type="text" placeholder="second minted token">
+      <p class="pill">On this computer</p>
+    </header>
+    <main>
+      <h1>Open a room</h1>
+      <p class="lede">Spendable handles let you open a short-lived room on this computer.</p>
+      <p class="status" id="status" role="status" aria-live="polite">No handle yet. Create one to start.</p>
+      <div class="actions">
+        <button type="button" class="primary" id="btn-primary">New handle</button>
+        <button type="button" class="ghost" id="btn-doctor">Doctor</button>
+        <button type="button" class="ghost" id="btn-help">Help</button>
       </div>
-    </div>
-    <label>Room id</label>
-    <input id="room_id" type="text" placeholder="opened room">
-    <label>Room / bus text</label>
-    <textarea id="post_text" rows="3">handles spend</textarea>
-    <div class="row2">
-      <div>
-        <label>Bus from</label>
-        <input id="bus_from" type="text" value="agent-a">
-      </div>
-      <div>
-        <label>Bus to</label>
-        <input id="bus_to" type="text" value="agent-b">
-      </div>
-    </div>
-    <div class="actions">
-      <button type="button" id="btn-handle-a">New handle A</button>
-      <button type="button" id="btn-handle-b">New handle B</button>
-      <button type="button" class="ghost" id="btn-rotate">Rotate A</button>
-      <button type="button" id="btn-room">Open room</button>
-      <button type="button" class="ghost" id="btn-post">Room post</button>
-      <button type="button" class="ghost" id="btn-pull">Room pull</button>
-      <button type="button" class="ghost" id="btn-bus-send">Bus send</button>
-      <button type="button" class="ghost" id="btn-bus-poll">Bus poll</button>
-      <button type="button" class="ghost" id="btn-verify">Verify receipt</button>
-      <button type="button" class="ghost" id="btn-export">Import/export</button>
-      <button type="button" class="ghost" id="btn-health">Health</button>
-      <button type="button" class="ghost" id="btn-skill">Skill</button>
-      <button type="button" class="ghost" id="btn-doctor">Doctor</button>
-    </div>
-  </fieldset>
-  <div class="status" id="status">No receipt yet. Mint two handles, then open a room. Mesh stays off.</div>
-  <pre id="out">{}</pre>
+      <section class="cards" id="handles" hidden>
+        <article class="card" id="card-a" hidden>
+          <h2>Your handle</h2>
+          <p id="label-show-a"></p>
+          <code class="token" id="token-show-a"></code>
+        </article>
+        <article class="card" id="card-b" hidden>
+          <h2>Second handle</h2>
+          <p id="label-show-b"></p>
+          <code class="token" id="token-show-b"></code>
+        </article>
+      </section>
+      <section class="composer" id="composer" hidden>
+        <p class="meta" id="room-line"></p>
+        <label for="message">Message</label>
+        <textarea id="message">Hello</textarea>
+      </section>
+      <section id="thread" hidden></section>
+      <details id="advanced">
+        <summary>Advanced</summary>
+        <div class="stack two">
+          <div>
+            <label for="label_a">Your label</label>
+            <input id="label_a" type="text" value="me">
+            <label for="token_a">Your token</label>
+            <input id="token_a" type="text" autocomplete="off">
+          </div>
+          <div>
+            <label for="label_b">Second label</label>
+            <input id="label_b" type="text" value="other">
+            <label for="token_b">Second token</label>
+            <input id="token_b" type="text" autocomplete="off">
+          </div>
+        </div>
+        <label for="room_id">Room id</label>
+        <input id="room_id" type="text" autocomplete="off">
+        <label for="post_text">Room or bus text</label>
+        <textarea id="post_text" rows="3">Hello</textarea>
+        <div class="stack two">
+          <div>
+            <label for="bus_from">Bus from</label>
+            <input id="bus_from" type="text" value="me">
+          </div>
+          <div>
+            <label for="bus_to">Bus to</label>
+            <input id="bus_to" type="text" value="other">
+          </div>
+        </div>
+        <div class="adv-actions">
+          <button type="button" id="btn-handle-a">New handle</button>
+          <button type="button" id="btn-handle-b">New second handle</button>
+          <button type="button" id="btn-rotate">Rotate handle</button>
+          <button type="button" id="btn-room">Open room</button>
+          <button type="button" id="btn-post">Send message</button>
+          <button type="button" id="btn-pull">Read room</button>
+          <button type="button" id="btn-bus-send">Send on the bus</button>
+          <button type="button" id="btn-bus-poll">Read the bus</button>
+          <button type="button" id="btn-verify">Check receipt</button>
+          <button type="button" id="btn-export">Export</button>
+          <button type="button" id="btn-health">Health</button>
+          <button type="button" id="btn-skill">Skill</button>
+        </div>
+        <details>
+          <summary>Response details</summary>
+          <pre id="out">No response yet.</pre>
+        </details>
+      </details>
+      <details class="about" id="about">
+        <summary>About</summary>
+        <p>Author: Aziel Eliab. Spec AZC-CHAT-0.1. This page listens on 127.0.0.1 only.</p>
+        <p id="session">__SESSION__</p>
+        <p id="honest">__HONEST__</p>
+      </details>
+    </main>
+  </div>
   <script>
     var lastReceipt = null;
     function $(id) { return document.getElementById(id); }
+    function syncPrimary() {
+      var hasA = !!$("token_a").value.trim();
+      var hasB = !!$("token_b").value.trim();
+      var hasRoom = !!$("room_id").value.trim();
+      var btn = $("btn-primary");
+      $("handles").hidden = !hasA && !hasB;
+      $("card-a").hidden = !hasA;
+      $("card-b").hidden = !hasB;
+      $("label-show-a").textContent = $("label_a").value || "Handle";
+      $("label-show-b").textContent = $("label_b").value || "Handle";
+      $("token-show-a").textContent = $("token_a").value;
+      $("token-show-b").textContent = $("token_b").value;
+      if (!hasA) {
+        btn.textContent = "New handle";
+        btn.dataset.act = "handle-a";
+        $("composer").hidden = true;
+      } else if (!hasB) {
+        btn.textContent = "New second handle";
+        btn.dataset.act = "handle-b";
+        $("composer").hidden = true;
+      } else if (!hasRoom) {
+        btn.textContent = "Open room";
+        btn.dataset.act = "room";
+        $("composer").hidden = true;
+      } else {
+        btn.textContent = "Send message";
+        btn.dataset.act = "post";
+        $("composer").hidden = false;
+        if (!$("message").value) $("message").value = $("post_text").value || "Hello";
+      }
+    }
+    function setStatus(text, kind) {
+      var el = $("status");
+      el.textContent = text;
+      el.className = "status" + (kind ? " " + kind : "");
+    }
+    function plain(data) {
+      if (!data || typeof data !== "object") return "Done.";
+      if (data.ok === false) {
+        var reasons = {
+          "handle-unlinked": "That handle is not live. Create a new handle, then try again.",
+          "need-two-handles": "A room needs two different handles. Create the second handle.",
+          "stranger-or-missing": "That room does not include this handle. Use a member token, or open a room.",
+          "room-sealed": "This room is sealed. Open a new room.",
+          "empty-post": "Write a message, then send it.",
+          "empty-frame": "Write a message, then send it on the bus."
+        };
+        return reasons[data.error] || (data.error || "That did not work.") + " See About, or try the primary button.";
+      }
+      if (data.op === "handle_new") return "Handle ready. Save the token, then create the second handle.";
+      if (data.op === "handle_rotate") return "Handle replaced. The previous token no longer works.";
+      if (data.op === "room_open") return "Room is open. Write a message, then send it.";
+      if (data.op === "room_post") return "Message sent.";
+      if (data.op === "room_pull") return (data.posts ? data.posts.length : 0) + " message(s) in this room.";
+      if (data.op === "bus_send") return "Bus frame sent.";
+      if (data.op === "bus_poll") return (data.count || 0) + " bus frame(s). Open Response details to read them.";
+      if (data.op === "verify_receipt") return data.match ? "Receipt matches." : "Receipt does not match.";
+      if (data.op === "import_export") return "Export stays on this computer. The host does not store it.";
+      if (data.op === "doctor") return "Doctor: pass. Handles, rooms, and the bus are available.";
+      if (data.op === "health") return "AZChat is up.";
+      if (data.op === "skill") return "Skill notes are under Response details.";
+      return data.note || "Done.";
+    }
+    function renderPosts(posts) {
+      var el = $("thread");
+      el.textContent = "";
+      if (!posts || !posts.length) { el.hidden = true; return; }
+      el.hidden = false;
+      posts.forEach(function (p) {
+        var item = document.createElement("article");
+        item.className = "post";
+        var meta = document.createElement("p");
+        meta.className = "meta";
+        meta.textContent = p.ts || "";
+        var body = document.createElement("p");
+        body.textContent = p.text || "";
+        item.appendChild(meta);
+        item.appendChild(body);
+        el.appendChild(item);
+      });
+    }
     function show(data) {
-      document.getElementById("out").textContent = JSON.stringify(data, null, 2);
-      var el = document.getElementById("status");
+      $("out").textContent = JSON.stringify(data, null, 2);
       var ok = data && data.ok !== false;
-      el.className = "status " + (ok ? "ok" : "bad");
-      el.textContent = (data && (data.note || data.error || data.op || data.status)) || "done";
+      setStatus(plain(data), ok ? "ok" : "bad");
       if (data && data.receipt) lastReceipt = data.receipt;
       if (data && data.token && data.op === "handle_new") {
-        if (!$("token_a").value) $("token_a").value = data.token;
-        else if (!$("token_b").value) $("token_b").value = data.token;
+        if (!$("token_a").value.trim()) {
+          $("token_a").value = data.token;
+          if (data.label) $("label_a").value = data.label;
+        } else if (!$("token_b").value.trim()) {
+          $("token_b").value = data.token;
+          if (data.label) $("label_b").value = data.label;
+        } else {
+          $("token_a").value = data.token;
+          if (data.label) $("label_a").value = data.label;
+        }
       }
       if (data && data.token && data.op === "handle_rotate") $("token_a").value = data.token;
       if (data && data.room_id && data.op === "room_open") $("room_id").value = data.room_id;
+      if (data && data.op === "room_pull") renderPosts(data.posts || []);
+      if (data && data.op === "room_post" && data.post) renderPosts([data.post]);
+      syncPrimary();
+      if (data && data.op === "handle_new" && data.ok !== false) {
+        if ($("token_a").value.trim() && $("token_b").value.trim()) {
+          setStatus("Two handles are ready. Open a room when you want.", "ok");
+        } else {
+          setStatus("Handle ready. Save the token, then create the second handle.", "ok");
+        }
+      }
+      if ($("room_id").value.trim()) $("room-line").textContent = "Room " + $("room_id").value.trim();
     }
     async function api(path, body) {
-      var get = path === "/v1/health" || path === "/v1/skill" || path === "/v1/doctor";
+      var get = path === "/v1/health" || path === "/v1/skill" || path === "/v1/doctor" || path === "/v1/session";
       var res = await fetch(path, {
         method: get ? "GET" : "POST",
         headers: { "content-type": "application/json", "user-agent": "Mozilla/5.0" },
@@ -155,23 +366,113 @@ PAGE = r"""<!DOCTYPE html>
       if (path === "/v1/skill") return { ok: true, op: "skill", skill: await res.text() };
       return res.json();
     }
-    $("btn-handle-a").onclick = async function () { show(await api("/v1/handle_new", { label: $("label_a").value })); };
-    $("btn-handle-b").onclick = async function () { show(await api("/v1/handle_new", { label: $("label_b").value })); };
-    $("btn-rotate").onclick = async function () { show(await api("/v1/handle_rotate", { token: $("token_a").value })); };
-    $("btn-room").onclick = async function () { show(await api("/v1/room_open", { token_a: $("token_a").value, token_b: $("token_b").value })); };
-    $("btn-post").onclick = async function () { show(await api("/v1/room_post", { token: $("token_a").value, room_id: $("room_id").value, text: $("post_text").value })); };
-    $("btn-pull").onclick = async function () { show(await api("/v1/room_pull", { token: $("token_a").value, room_id: $("room_id").value })); };
-    $("btn-bus-send").onclick = async function () { show(await api("/v1/bus_send", { from: $("bus_from").value, to: $("bus_to").value, text: $("post_text").value })); };
-    $("btn-bus-poll").onclick = async function () { show(await api("/v1/bus_poll", { agent: $("bus_to").value })); };
-    $("btn-verify").onclick = async function () { show(await api("/v1/verify_receipt", { receipt: lastReceipt || {} })); };
-    $("btn-export").onclick = async function () { show(await api("/v1/import_export", { mode: "export" })); };
-    $("btn-health").onclick = async function () { show(await api("/v1/health")); };
-    $("btn-skill").onclick = async function () { show(await api("/v1/skill")); };
-    $("btn-doctor").onclick = async function () { show(await api("/v1/doctor")); };
+    async function run(act) {
+      var text = $("message").value || $("post_text").value;
+      $("post_text").value = text;
+      if (act === "handle-a") return show(await api("/v1/handle_new", { label: $("label_a").value }));
+      if (act === "handle-b") return show(await api("/v1/handle_new", { label: $("label_b").value }));
+      if (act === "rotate") return show(await api("/v1/handle_rotate", { token: $("token_a").value }));
+      if (act === "room") return show(await api("/v1/room_open", { token_a: $("token_a").value, token_b: $("token_b").value }));
+      if (act === "post") {
+        var posted = await api("/v1/room_post", { token: $("token_a").value, room_id: $("room_id").value, text: text });
+        show(posted);
+        if (posted && posted.ok !== false) {
+          var pulled = await api("/v1/room_pull", { token: $("token_a").value, room_id: $("room_id").value });
+          if (pulled && pulled.posts) renderPosts(pulled.posts);
+        }
+        return;
+      }
+      if (act === "pull") return show(await api("/v1/room_pull", { token: $("token_a").value, room_id: $("room_id").value }));
+      if (act === "bus-send") return show(await api("/v1/bus_send", { from: $("bus_from").value, to: $("bus_to").value, text: text }));
+      if (act === "bus-poll") return show(await api("/v1/bus_poll", { agent: $("bus_to").value }));
+      if (act === "verify") return show(await api("/v1/verify_receipt", { receipt: lastReceipt || {} }));
+      if (act === "export") return show(await api("/v1/import_export", { mode: "export" }));
+      if (act === "health") return show(await api("/v1/health"));
+      if (act === "skill") return show(await api("/v1/skill"));
+      if (act === "doctor") return show(await api("/v1/doctor"));
+    }
+    $("btn-primary").dataset.act = "handle-a";
+    $("btn-primary").onclick = function () { run($("btn-primary").dataset.act); };
+    $("btn-doctor").onclick = function () { run("doctor"); };
+    $("btn-help").onclick = function () {
+      $("about").open = true;
+      $("about").scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    $("btn-handle-a").onclick = function () { run("handle-a"); };
+    $("btn-handle-b").onclick = function () { run("handle-b"); };
+    $("btn-rotate").onclick = function () { run("rotate"); };
+    $("btn-room").onclick = function () { run("room"); };
+    $("btn-post").onclick = function () { run("post"); };
+    $("btn-pull").onclick = function () { run("pull"); };
+    $("btn-bus-send").onclick = function () { run("bus-send"); };
+    $("btn-bus-poll").onclick = function () { run("bus-poll"); };
+    $("btn-verify").onclick = function () { run("verify"); };
+    $("btn-export").onclick = function () { run("export"); };
+    $("btn-health").onclick = function () { run("health"); };
+    $("btn-skill").onclick = function () { run("skill"); };
+    ["token_a", "token_b", "room_id", "label_a", "label_b"].forEach(function (id) {
+      $(id).addEventListener("input", syncPrimary);
+    });
+    syncPrimary();
+    async function hydrate() {
+      var data = await api("/v1/session");
+      if (!data || !data.handles) return;
+      if (data.handles[0]) {
+        $("token_a").value = data.handles[0].token || "";
+        if (data.handles[0].label) $("label_a").value = data.handles[0].label;
+      }
+      if (data.handles[1]) {
+        $("token_b").value = data.handles[1].token || "";
+        if (data.handles[1].label) $("label_b").value = data.handles[1].label;
+      }
+      var rooms = data.rooms || [];
+      var openRoom = null;
+      rooms.forEach(function (room) { if (!room.sealed) openRoom = room; });
+      if (openRoom && openRoom.id) $("room_id").value = openRoom.id;
+      syncPrimary();
+      if ($("token_a").value && $("token_b").value && !$("room_id").value) {
+        setStatus("Two handles are ready. Open a room when you want.", "ok");
+      }
+      if ($("room_id").value && $("token_a").value) {
+        var pulled = await api("/v1/room_pull", { token: $("token_a").value, room_id: $("room_id").value });
+        if (pulled && pulled.posts) renderPosts(pulled.posts);
+        if (pulled && pulled.ok !== false) setStatus("Room is open. Write a message, then send it.", "ok");
+      }
+    }
+    hydrate().catch(function () {
+      setStatus("The session could not be read. You can still create a handle.", "bad");
+    });
   </script>
 </body>
 </html>
-""".replace("__HONEST__", HONEST.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+"""
+
+
+def render_page(session_note: str | None = None) -> str:
+    note = session_note
+    if note is None:
+        path = session_path()
+        note = f"Session file: {path}" if path else ""
+    page = _PAGE.replace("__HONEST__", html.escape(HONEST))
+    return page.replace("__SESSION__", html.escape(note))
+
+
+PAGE = render_page("")
+
+
+def wants_json(accept: str | None) -> bool:
+    header = (accept or "").lower()
+    json_at = header.find("application/json")
+    if json_at < 0:
+        return False
+    html_at = header.find("text/html")
+    if html_at < 0:
+        return True
+    return json_at < html_at
+
+
+def open_line(host: str, port: int) -> str:
+    return f"Open http://{host}:{port}/"
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -192,10 +493,36 @@ class Handler(BaseHTTPRequestHandler):
         raw = json.dumps(data, indent=2, ensure_ascii=True).encode("utf-8")
         self._send(raw, "application/json; charset=utf-8", status)
 
+    def _remember(self) -> str | None:
+        problem = load_session()
+        return problem
+
     def do_GET(self) -> None:  # noqa: N802
         path = urlparse(self.path).path.rstrip("/") or "/"
         if path == "/":
-            self._send(PAGE.encode("utf-8"), "text/html; charset=utf-8")
+            if wants_json(self.headers.get("Accept")):
+                self._json(health())
+                return
+            problem = self._remember()
+            note = problem or ""
+            if not note:
+                session = session_path()
+                note = f"Session file: {session}" if session else ""
+            page = render_page(note)
+            if problem:
+                page = page.replace(
+                    "No handle yet. Create one to start.",
+                    html.escape(problem),
+                    1,
+                )
+            self._send(page.encode("utf-8"), "text/html; charset=utf-8")
+            return
+        if path == "/v1/session":
+            problem = self._remember()
+            if problem:
+                self._json({"ok": False, "error": problem}, 400)
+                return
+            self._json(session_view())
             return
         if path == "/v1/health":
             self._json(health())
@@ -225,19 +552,24 @@ class Handler(BaseHTTPRequestHandler):
             self._json({"error": "JSON body required"}, 400)
             return
         op = path[4:] if path.startswith("/v1/") else ""
+        problem = self._remember()
+        if problem:
+            self._json({"ok": False, "error": problem}, 400)
+            return
         try:
             self._json(dispatch(op, payload if isinstance(payload, dict) else {}))
         except AzChatError as exc:
             self._json({"ok": False, "error": str(exc)}, 400)
+            return
+        save_session()
 
 
 def serve(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> None:
     if host not in LOOPBACK:
-        raise ValueError("AZChat UI binds loopback only")
+        raise ValueError("AZChat listens on this computer only (127.0.0.1).")
     httpd = ThreadingHTTPServer((host, port), Handler)
-    print(f"AZChat UI http://{host}:{port}  (loopback only)")
-    print("Author: Aziel Eliab. Mesh hop default off. Not SMTP. Not AZMail.")
+    print(open_line(host, port), flush=True)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print("\nstopped")
+        print("\nStopped.")

@@ -129,6 +129,10 @@ Hub Software tab: `GET https://aziel-runtime.vibelock.workers.dev/v1/software`
 `room_post`, `room_pull`, `room_list`, `room_host`, `room_join`,
 `bus_send`, `bus_poll`, `verify_receipt`, `import_export`.
 
+`room_list`, `room_host`, and `room_join` are served by this Worker and
+the local engine. This repository does not change the aziel-runtime
+FragGate describe card.
+
 Stubs (refuse `AZC-CHAT-REFUSE`): `smtp`, `smtp_send`, `send`, `mail`,
 `deliver`, `deanonymize`, `harvest`, `mesh_join`, `mesh_enable`, `vpn`,
 `bridge_azmail`, `bridge`, `chromium`.

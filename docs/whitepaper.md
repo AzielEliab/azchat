@@ -42,7 +42,10 @@ verify_receipt, import_export.
 room. A private room stores a PBKDF2-HMAC-SHA-256 verifier only. A wrong
 or missing passphrase does not join, and the passphrase is not in the
 public list. Private means passphrase-gated entry. It is not end-to-end
-encryption. Pairwise `room_open` stays off the list.
+encryption. Pairwise `room_open` stays off the list. `room_list`,
+`room_host`, and `room_join` are served by this Worker and the local
+engine. This repository does not change the aziel-runtime FragGate
+describe card.
 
 Stubs refuse with `AZC-CHAT-REFUSE`.
 

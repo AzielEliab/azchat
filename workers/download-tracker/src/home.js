@@ -313,7 +313,8 @@ ${HUB_GODLOCK}
 POST /v1/handle_new, POST /v1/handle_rotate, POST /v1/room_open, POST /v1/room_post, POST /v1/room_pull, GET|POST /v1/room_list, POST /v1/room_host, POST /v1/room_join, POST /v1/bus_send, POST /v1/bus_poll, POST /v1/verify_receipt, POST /v1/import_export, GET /v1/health, GET /v1/skill, GET /v1/doctor
 FragGate proxy: GET /v1/fraggate/list, GET /v1/fraggate/describe, POST /v1/fraggate/call (via AZIEL_RUNTIME)
 Suite mesh: GET ${HOST}/v1/mesh PROXY to aziel-runtime. Default OFF. GET never enables. Product-local mesh_enable is stub/REFUSE. SPLIT THE WIRES + COLD-COPY SURVIVAL hub cites. Hop default off.
-Catalog LIVE_OPS: health, skill, doctor, handle_new, handle_rotate, room_open, room_post, room_pull, room_list, room_host, room_join, bus_send, bus_poll, verify_receipt, import_export
+Worker and local-engine ops: health, skill, doctor, handle_new, handle_rotate, room_open, room_post, room_pull, room_list, room_host, room_join, bus_send, bus_poll, verify_receipt, import_export
+room_list, room_host, and room_join are served by this Worker and the local engine. This repository does not change the aziel-runtime FragGate describe card.
 MCP tools: azchat_health, azchat_skill, azchat_doctor, azchat_handle_new, azchat_handle_rotate, azchat_room_open, azchat_room_post, azchat_room_pull, azchat_room_list, azchat_room_host, azchat_room_join, azchat_bus_send, azchat_bus_poll, azchat_verify_receipt, azchat_import_export
 Private rooms: passphrase-gated entry (PBKDF2 verifier). Wrong or missing passphrase does not join. The passphrase is not on the public list. Private is not end-to-end encryption.
 

@@ -87,7 +87,8 @@ curl -s -A 'Mozilla/5.0' -X POST https://aziel-runtime.vibelock.workers.dev/v1/f
   -d '{"slug":"azchat","op":"health","payload":{}}'
 ```
 
-FragGate LIVE_OPS (slug `azchat`): health, skill, doctor, handle_new, handle_rotate, room_open, room_post, room_pull, room_list, room_host, room_join, bus_send, bus_poll, verify_receipt, import_export.
+Worker and local-engine ops: health, skill, doctor, handle_new, handle_rotate, room_open, room_post, room_pull, room_list, room_host, room_join, bus_send, bus_poll, verify_receipt, import_export.
+`room_list`, `room_host`, and `room_join` are served here. This repository does not change the aziel-runtime FragGate describe card.
 UI labels match that catalog set: Health / Skill / Doctor / New handle / Rotate / Open room / Post / Pull / All rooms / Host room / Join room / Bus send / Bus poll / Verify receipt / Import-export.
 Private rooms store a PBKDF2-HMAC-SHA-256 verifier only. The passphrase is not written to the public list and is not logged. Private is not end-to-end encryption. Pairwise `room_open` stays off the all-rooms list.
 

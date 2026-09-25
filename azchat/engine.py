@@ -274,7 +274,8 @@ AZChat: spendable handles, ephemeral rooms, agent bus. Mesh hop default off. Not
 - HTTP: `POST /v1/fraggate/call` with the same envelope
 - Leftover flat names such as `azchat_health` still go through FragGate (`parseTarget`) — they are not a side door and are not listed on `tools/list`
 
-LIVE_OPS: health, skill, doctor, handle_new, handle_rotate, room_open, room_post, room_pull, room_list, room_host, room_join, bus_send, bus_poll, verify_receipt, import_export.
+Worker and local-engine ops: health, skill, doctor, handle_new, handle_rotate, room_open, room_post, room_pull, room_list, room_host, room_join, bus_send, bus_poll, verify_receipt, import_export.
+room_list, room_host, and room_join are served by this Worker and the local engine. This repository does not change the aziel-runtime FragGate describe card.
 
 Hosted rooms: `room_host` puts a room on the all-rooms list (`room_list`). `room_join` enters a listed room. A private room stores only a PBKDF2-HMAC-SHA-256 verifier. A wrong or missing passphrase does not join. The passphrase is not on the public list and is not stored in plaintext. Private is passphrase-gated entry, not end-to-end encryption. Pairwise `room_open` rooms stay off the list. Stranger `room_pull` is 404 until a live handle is a member.
 

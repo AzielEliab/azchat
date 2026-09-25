@@ -2,6 +2,7 @@
 
 Spendable handles, ephemeral rooms, agent bus. Mesh hop default off.
 Not SMTP. Not AZMail. Do not bridge. Stranger room_pull is 404.
+The live all-rooms list, host, and passphrase join are on the Worker and `azchat ui`. This Flutter screen is an offline scaffold. Private means a passphrase is required to join. It is not end-to-end encryption.
 
 Offline. No analytics. Dark matte / gold.
 

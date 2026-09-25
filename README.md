@@ -88,8 +88,10 @@ azchat ui
 
 Open http://127.0.0.1:8878 on this computer only. The first screen has one
 primary action. Rotate, the agent bus, receipt check, and export are under
-Advanced. Catalog labels: Health / Skill / Doctor / New handle / Rotate /
-Open room / Post / Pull / Bus send / Bus poll / Verify receipt / Import-export.
+Advanced. Hosted rooms are on the all-rooms list. A private room requires a
+passphrase to join and is not end-to-end encryption. Catalog labels: Health /
+Skill / Doctor / New handle / Rotate / Open room / Post / Pull / All rooms /
+Host room / Join room / Bus send / Bus poll / Verify receipt / Import-export.
 
 ## Dual-surface law
 
@@ -124,8 +126,8 @@ Hub Software tab: `GET https://aziel-runtime.vibelock.workers.dev/v1/software`
 ## LIVE_OPS
 
 `health`, `skill`, `doctor`, `handle_new`, `handle_rotate`, `room_open`,
-`room_post`, `room_pull`, `bus_send`, `bus_poll`, `verify_receipt`,
-`import_export`.
+`room_post`, `room_pull`, `room_list`, `room_host`, `room_join`,
+`bus_send`, `bus_poll`, `verify_receipt`, `import_export`.
 
 Stubs (refuse `AZC-CHAT-REFUSE`): `smtp`, `smtp_send`, `send`, `mail`,
 `deliver`, `deanonymize`, `harvest`, `mesh_join`, `mesh_enable`, `vpn`,
@@ -179,7 +181,8 @@ THIS IS: AZChat spendable handles, ephemeral rooms (TTL/sealed), and an
 agent bus. Reached only through FragGate. mesh_enabled_default is false.
 THIS IS NOT: SMTP, a public MTA, AZMail, a mesh hop, deanonymize, or a
 Chromium chat runner. Do not bridge AZChat ↔ AZMail. Stranger room_pull
-is 404. Author: Aziel Eliab only.
+is 404. Hosted rooms appear on the all-rooms list. A private room requires
+a passphrase to join and is not end-to-end encryption. Author: Aziel Eliab only.
 
 Cite the GitHub repository and this Worker. No Zenodo DOI is invented
 here; a software deposit is still needed.

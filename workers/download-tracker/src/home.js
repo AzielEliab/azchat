@@ -47,7 +47,7 @@ const INSTALL_LINE = "curl -fsSL https://azchat-download-tracker.vibelock.worker
 const DESCRIPTION =
   "AZChat is Aziel Eliab software: spendable handles, ephemeral rooms, and an agent bus (AZC-CHAT-0.1). Mesh hop default off. Not SMTP. Not AZMail. FragGate only. Apache-2.0.";
 const HONEST =
-  "THIS IS: AZChat spendable handles, ephemeral rooms (TTL/sealed), and an agent bus. Reached only through FragGate. mesh_enabled_default is false. THIS IS NOT: SMTP, a public MTA, AZMail, a mesh hop, deanonymize, or a Chromium chat runner. Do not bridge AZChat ↔ AZMail. Stranger room_pull is 404. Author: Aziel Eliab only.";
+  "THIS IS: AZChat spendable handles, ephemeral rooms (TTL/sealed), and an agent bus. Reached only through FragGate. mesh_enabled_default is false. THIS IS NOT: SMTP, a public MTA, AZMail, a mesh hop, deanonymize, or a Chromium chat runner. Do not bridge AZChat ↔ AZMail. Stranger room_pull is 404. Hosted rooms appear on the all-rooms list. A private room requires a passphrase to join and is not end-to-end encryption. Author: Aziel Eliab only.";
 const HOW_TO_CITE =
   "Eliab, Aziel. (2026). AZChat 0.1.0 [Software]. Apache-2.0. https://github.com/AzielEliab/azchat · https://azchat-download-tracker.vibelock.workers.dev/";
 
@@ -310,11 +310,12 @@ ${HUB_GODLOCK}
 
 ## Ops
 
-POST /v1/handle_new, POST /v1/handle_rotate, POST /v1/room_open, POST /v1/room_post, POST /v1/room_pull, POST /v1/bus_send, POST /v1/bus_poll, POST /v1/verify_receipt, POST /v1/import_export, GET /v1/health, GET /v1/skill, GET /v1/doctor
+POST /v1/handle_new, POST /v1/handle_rotate, POST /v1/room_open, POST /v1/room_post, POST /v1/room_pull, GET|POST /v1/room_list, POST /v1/room_host, POST /v1/room_join, POST /v1/bus_send, POST /v1/bus_poll, POST /v1/verify_receipt, POST /v1/import_export, GET /v1/health, GET /v1/skill, GET /v1/doctor
 FragGate proxy: GET /v1/fraggate/list, GET /v1/fraggate/describe, POST /v1/fraggate/call (via AZIEL_RUNTIME)
 Suite mesh: GET ${HOST}/v1/mesh PROXY to aziel-runtime. Default OFF. GET never enables. Product-local mesh_enable is stub/REFUSE. SPLIT THE WIRES + COLD-COPY SURVIVAL hub cites. Hop default off.
-Catalog LIVE_OPS: health, skill, doctor, handle_new, handle_rotate, room_open, room_post, room_pull, bus_send, bus_poll, verify_receipt, import_export
-MCP tools: azchat_health, azchat_skill, azchat_doctor, azchat_handle_new, azchat_handle_rotate, azchat_room_open, azchat_room_post, azchat_room_pull, azchat_bus_send, azchat_bus_poll, azchat_verify_receipt, azchat_import_export
+Catalog LIVE_OPS: health, skill, doctor, handle_new, handle_rotate, room_open, room_post, room_pull, room_list, room_host, room_join, bus_send, bus_poll, verify_receipt, import_export
+MCP tools: azchat_health, azchat_skill, azchat_doctor, azchat_handle_new, azchat_handle_rotate, azchat_room_open, azchat_room_post, azchat_room_pull, azchat_room_list, azchat_room_host, azchat_room_join, azchat_bus_send, azchat_bus_poll, azchat_verify_receipt, azchat_import_export
+Private rooms: passphrase-gated entry (PBKDF2 verifier). Wrong or missing passphrase does not join. The passphrase is not on the public list. Private is not end-to-end encryption.
 
 ## AI clients (full set — never the short triad only)
 
@@ -423,6 +424,11 @@ export function renderHome(stats) {
  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
  @media (max-width: 520px) { .row2 { grid-template-columns: 1fr; } }
  .actions { display: flex; flex-wrap: wrap; gap: .5rem; margin: .95rem 0 .2rem; }
+ .check { display: flex; align-items: center; gap: .45rem; margin-top: .75rem; }
+ .check input { width: auto; }
+ .roomlist { list-style: none; margin: .7rem 0 0; padding: 0; }
+ .roomlist li { display: flex; flex-wrap: wrap; gap: .4rem .6rem; align-items: center; border: 1px solid var(--line); border-radius: 8px; padding: .5rem .65rem; margin: 0 0 .4rem; background: #101010; font-size: .88rem; }
+ .roomlist button { padding: .4rem .65rem; }
  button, a.btn { font: 700 .88rem/1.1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .03em; padding: .72rem .9rem; border-radius: 9px; border: 1px solid transparent; cursor: pointer; text-decoration: none; display: inline-block; }
  button.gold, a.btn.gold { background: var(--gold-dim); color: #14110a; }
  button.ink, a.btn.ink { background: var(--ink); color: var(--bg); }
@@ -516,7 +522,7 @@ export function renderHome(stats) {
 
     <section class="workspace" id="workspace">
       <h2><span class="kicker">Live software</span>AZChat workspace</h2>
-      <p class="lede">Use UI: catalog labels on this Worker — Health / Skill / Doctor / New handle / Rotate / Open room / Post / Pull / Bus send / Bus poll / Verify receipt / Import-export. FragGate door proxy: <code>/v1/fraggate/list</code>, <code>/describe</code>, <code>/call</code> via AZIEL_RUNTIME. Suite mesh: <code>/v1/mesh/*</code> PROXY (default OFF). Room_open needs two live handle tokens. Stranger room_pull is 404.</p>
+      <p class="lede">Use UI: catalog labels on this Worker — Health / Skill / Doctor / New handle / Rotate / Open room / Post / Pull / All rooms / Host room / Join room / Bus send / Bus poll / Verify receipt / Import-export. FragGate door proxy: <code>/v1/fraggate/list</code>, <code>/describe</code>, <code>/call</code> via AZIEL_RUNTIME. Suite mesh: <code>/v1/mesh/*</code> PROXY (default OFF). Room_open needs two live handle tokens and stays off the all-rooms list. Host puts a room on that list. Private means a passphrase is required to join. It is not end-to-end encryption. Stranger room_pull is 404.</p>
       <div class="workgrid">
         <form id="ws-form" autocomplete="off">
           <div class="row2">
@@ -534,7 +540,13 @@ export function renderHome(stats) {
             </div>
           </div>
           <label for="room_id"><span class="kicker">Room id</span></label>
-          <input id="room_id" type="text" placeholder="opened room">
+          <input id="room_id" type="text" placeholder="opened or joined room">
+          <label for="room_title"><span class="kicker">Room title</span></label>
+          <input id="room_title" type="text" value="hall" maxlength="80">
+          <label class="check" for="room_private"><input id="room_private" type="checkbox"> Private room — passphrase required to join</label>
+          <label for="room_pass"><span class="kicker">Passphrase</span></label>
+          <input id="room_pass" type="password" autocomplete="new-password" placeholder="required only when the room is private">
+          <p class="meta" id="room-note">Private means a passphrase is required to join. It is not end-to-end encryption. The passphrase is not shown on the all-rooms list. Lamb Lens Service → Clarity → Peace. Author: Aziel Eliab only.</p>
           <label for="post_text"><span class="kicker">Room / bus text</span></label>
           <textarea id="post_text" rows="3">handles spend</textarea>
           <div class="row2">
@@ -552,6 +564,8 @@ export function renderHome(stats) {
             <button type="button" class="gold" id="btn-handle-b">New handle B</button>
             <button type="button" class="ghost" id="btn-rotate">Rotate A</button>
             <button type="button" class="ink" id="btn-room">Open room</button>
+            <button type="button" class="ink" id="btn-host">Host room</button>
+            <button type="button" class="ghost" id="btn-rooms">All rooms</button>
             <button type="button" class="ghost" id="btn-post">Room post</button>
             <button type="button" class="ghost" id="btn-pull">Room pull</button>
             <button type="button" class="ghost" id="btn-bus-send">Bus send</button>
@@ -563,6 +577,7 @@ export function renderHome(stats) {
             <button type="button" class="ghost" id="btn-doctor">Doctor</button>
             <button type="button" class="gold" id="btn-fraggate">FragGate call</button>
           </div>
+          <ul id="room-list" class="roomlist" aria-label="All rooms"></ul>
         </form>
         <div>
           <div class="status" id="ws-status">No receipt yet. Mint two handles, then open a room. Mesh stays off.</div>
@@ -689,7 +704,7 @@ export function renderHome(stats) {
         else if (! $("token_b").value) $("token_b").value = data.token;
       }
       if (data && data.token && data.op === "handle_rotate") $("token_a").value = data.token;
-      if (data && data.room_id && data.op === "room_open") $("room_id").value = data.room_id;
+      if (data && data.room_id && (data.op === "room_open" || data.op === "room_host" || data.op === "room_join")) $("room_id").value = data.room_id;
       var ok = data && data.ok !== false;
       var msg = (data && (data.note || data.error || data.op || data.status)) || fallbackMsg;
       setStatus(ok ? "ok" : "bad", msg || "Done.");
@@ -702,7 +717,49 @@ export function renderHome(stats) {
     $("btn-handle-a").onclick = function () { run(function () { return api("/v1/handle_new", { label: $("label_a").value }); }, "Handle A minted."); };
     $("btn-handle-b").onclick = function () { run(function () { return api("/v1/handle_new", { label: $("label_b").value }); }, "Handle B minted."); };
     $("btn-rotate").onclick = function () { run(function () { return api("/v1/handle_rotate", { token: $("token_a").value }); }, "Handle A rotated."); };
+    function esc(s) {
+      return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+    async function refreshRooms() {
+      var data = await api("/v1/room_list", {});
+      var list = $("room-list");
+      var rooms = (data && data.rooms) || [];
+      if (!rooms.length) {
+        list.innerHTML = "<li>No hosted rooms yet.</li>";
+        return data;
+      }
+      list.innerHTML = rooms.map(function (room) {
+        var gate = room.private ? "private · passphrase required" : "open entry";
+        return "<li><strong>" + esc(room.title || "room") + "</strong> <code>" + esc(room.room_id) + "</code> <span>" + esc(gate) + "</span> <span>" + esc(room.member_count) + " members</span> <button type=\\"button\\" data-join=\\"" + esc(room.room_id) + "\\" data-private=\\"" + (room.private ? "1" : "0") + "\\">Join</button></li>";
+      }).join("");
+      return data;
+    }
     $("btn-room").onclick = function () { run(function () { return api("/v1/room_open", { token_a: $("token_a").value, token_b: $("token_b").value }); }, "Room opened."); };
+    $("btn-host").onclick = function () {
+      run(async function () {
+        var body = { token: $("token_a").value, title: $("room_title").value, private: $("room_private").checked };
+        if ($("room_private").checked) body.passphrase = $("room_pass").value;
+        var data = await api("/v1/room_host", body);
+        if (data && data.ok) $("room_pass").value = "";
+        await refreshRooms();
+        return data;
+      }, "Room hosted.");
+    };
+    $("btn-rooms").onclick = function () { run(function () { return refreshRooms(); }, "All rooms."); };
+    $("room-list").addEventListener("click", function (ev) {
+      var btn = ev.target.closest ? ev.target.closest("button[data-join]") : null;
+      if (!btn) return;
+      var id = btn.getAttribute("data-join");
+      var isPrivate = btn.getAttribute("data-private") === "1";
+      run(async function () {
+        var body = { token: $("token_a").value, room_id: id };
+        if (isPrivate) body.passphrase = $("room_pass").value;
+        var data = await api("/v1/room_join", body);
+        if (data && data.ok) $("room_pass").value = "";
+        await refreshRooms();
+        return data;
+      }, "Join.");
+    });
     $("btn-post").onclick = function () { run(function () { return api("/v1/room_post", { token: $("token_a").value, room_id: $("room_id").value, text: $("post_text").value }); }, "Posted."); };
     $("btn-pull").onclick = function () { run(function () { return api("/v1/room_pull", { token: $("token_a").value, room_id: $("room_id").value }); }, "Pulled."); };
     $("btn-bus-send").onclick = function () { run(function () { return api("/v1/bus_send", { from: $("bus_from").value, to: $("bus_to").value, text: $("post_text").value }); }, "Bus frame sent."); };
@@ -849,6 +906,7 @@ export function renderHome(stats) {
       try { navigator.sendBeacon("/v1/mesh/leave", new Blob([JSON.stringify({ node_id: id })], { type: "application/json" })); } catch (e) { /* leave expires in 5 minutes */ }
     });
     refreshMesh();
+    refreshRooms().catch(function () { /* list fills when the API answers */ });
     setInterval(refreshMesh, 30000);
     document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshMesh(); });
     render();

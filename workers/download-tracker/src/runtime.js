@@ -28,6 +28,9 @@ import {
   roomOpen,
   roomPost,
   roomPull,
+  roomList,
+  roomHost,
+  roomJoin,
   busSend,
   busPoll,
   verifyReceipt,
@@ -66,10 +69,14 @@ function examplePayload() {
     handle_new: { label: "agent-a" },
     room_open: { token_a: "<handle A token>", token_b: "<handle B token>", ttl_ms: 900000 },
     room_post: { token: "<member token>", room_id: "<room id>", text: "handles spend" },
+    room_list: {},
+    room_host: { token: "<host handle token>", title: "hall", private: false },
+    room_host_private: { token: "<host handle token>", title: "quiet", private: true, passphrase: "<passphrase>" },
+    room_join: { token: "<joiner handle token>", room_id: "<listed room id>", passphrase: "<passphrase if private>" },
     bus_send: { from: "agent-a", to: "agent-b", text: "poll the bus" },
     author: AUTHOR,
     spec: SPEC,
-    note: "Mint two handles, then room_open with token_a + token_b. Stranger room_pull is 404. Mesh stays off.",
+    note: "Mint a handle, then room_host to put a room on the all-rooms list. room_list is public metadata only. Private rooms require a passphrase on room_join. A wrong or missing passphrase does not join. Private is not end-to-end encryption. Pairwise room_open stays off the list. Stranger room_pull is 404. Mesh stays off.",
   };
 }
 
@@ -115,6 +122,9 @@ function mcpToolSchemas() {
     { name: "azchat_room_open", description: "Open an ephemeral room. Needs two live handle tokens.", inputSchema: { type: "object", properties: { token_a: { type: "string" }, token_b: { type: "string" }, handle_a: { type: "string" }, handle_b: { type: "string" }, ttl_ms: { type: "number" } } } },
     { name: "azchat_room_post", description: "Post into a room as a member. Stranger is 404.", inputSchema: { type: "object", properties: { token: { type: "string" }, handle_token: { type: "string" }, room_id: { type: "string" }, text: { type: "string" }, body: { type: "string" } } } },
     { name: "azchat_room_pull", description: "Pull room posts. Stranger room_pull is 404.", inputSchema: { type: "object", properties: { token: { type: "string" }, handle_token: { type: "string" }, room_id: { type: "string" } } } },
+    { name: "azchat_room_list", description: "All hosted rooms. Public metadata only. No passphrase, no verifier. Private means passphrase-gated entry, not end-to-end encryption.", inputSchema: { type: "object", properties: {} } },
+    { name: "azchat_room_host", description: "Host a room that appears on the all-rooms list. private=true requires a passphrase. The passphrase is hashed and is not returned.", inputSchema: { type: "object", properties: { token: { type: "string" }, handle_token: { type: "string" }, title: { type: "string" }, private: { type: "boolean" }, passphrase: { type: "string" }, ttl_ms: { type: "number" } } } },
+    { name: "azchat_room_join", description: "Join a listed room. A private room fails closed when the passphrase is missing or wrong.", inputSchema: { type: "object", properties: { token: { type: "string" }, handle_token: { type: "string" }, room_id: { type: "string" }, passphrase: { type: "string" } } } },
     { name: "azchat_bus_send", description: "Send an agent-bus frame. Not AZMail.", inputSchema: { type: "object", properties: { from: { type: "string" }, to: { type: "string" }, agent: { type: "string" }, peer: { type: "string" }, text: { type: "string" }, body: { type: "string" } } } },
     { name: "azchat_bus_poll", description: "Poll the agent bus.", inputSchema: { type: "object", properties: { agent: { type: "string" }, to: { type: "string" }, limit: { type: "number" } } } },
     { name: "azchat_verify_receipt", description: "Hash-walk a receipt. Same as POST /v1/verify_receipt.", inputSchema: { type: "object", properties: { receipt: { type: "object" }, receipt_sha256: { type: "string" } } } },
@@ -150,6 +160,9 @@ async function runMcpOp(op, body) {
   if (op === "room_open") return roomOpen(payload);
   if (op === "room_post") return roomPost(payload);
   if (op === "room_pull") return roomPull(payload);
+  if (op === "room_list") return roomList();
+  if (op === "room_host") return roomHost(payload);
+  if (op === "room_join") return roomJoin(payload);
   if (op === "bus_send") return busSend(payload);
   if (op === "bus_poll") return busPoll(payload);
   if (op === "verify_receipt" || op === "verify") return verifyReceipt(payload);
@@ -174,7 +187,7 @@ async function callMcpTool(name, args) {
         type: "text",
         text: JSON.stringify({
           ok: false,
-          error: "Unknown MCP tool. Use azchat_health, azchat_skill, azchat_doctor, azchat_handle_new, azchat_handle_rotate, azchat_room_open, azchat_room_post, azchat_room_pull, azchat_bus_send, azchat_bus_poll, azchat_verify_receipt, azchat_import_export. Stub verbs refuse AZC-CHAT-REFUSE. Canonical catalog MCP: " + CATALOG_MCP + " slug=azchat.",
+          error: "Unknown MCP tool. Use azchat_health, azchat_skill, azchat_doctor, azchat_handle_new, azchat_handle_rotate, azchat_room_open, azchat_room_post, azchat_room_pull, azchat_room_list, azchat_room_host, azchat_room_join, azchat_bus_send, azchat_bus_poll, azchat_verify_receipt, azchat_import_export. Stub verbs refuse AZC-CHAT-REFUSE. Canonical catalog MCP: " + CATALOG_MCP + " slug=azchat.",
           door: "fraggate",
           slug: SLUG,
           agent_path: FRAGGATE_CALL,
@@ -264,6 +277,12 @@ function openapiSpec() {
       "/v1/room_open": opPath("room_open"),
       "/v1/room_post": opPath("room_post"),
       "/v1/room_pull": opPath("room_pull"),
+      "/v1/room_list": {
+        get: { operationId: "azchat_room_list_get", summary: "All hosted rooms. Public metadata only. No passphrase.", tags: ["azchat"], responses: { "200": { description: "room list" } } },
+        post: { operationId: "azchat_room_list", summary: "All hosted rooms. Public metadata only. No passphrase.", tags: ["azchat"], requestBody: { content: { "application/json": { schema: { type: "object" } } } }, responses: { "200": { description: "room list" } } },
+      },
+      "/v1/room_host": opPath("room_host"),
+      "/v1/room_join": opPath("room_join"),
       "/v1/bus_send": opPath("bus_send"),
       "/v1/bus_poll": opPath("bus_poll"),
       "/v1/verify_receipt": opPath("verify_receipt"),
@@ -415,13 +434,16 @@ export async function handleRuntimeApi(request, url, env) {
     if (path === "/v1/room_open" && request.method === "POST") return json(await roomOpen(await readBody(request)));
     if (path === "/v1/room_post" && request.method === "POST") return json(await roomPost(await readBody(request)));
     if (path === "/v1/room_pull" && request.method === "POST") return json(await roomPull(await readBody(request)));
+    if (path === "/v1/room_list" && (request.method === "GET" || request.method === "POST")) return json(roomList());
+    if (path === "/v1/room_host" && request.method === "POST") return json(await roomHost(await readBody(request)));
+    if (path === "/v1/room_join" && request.method === "POST") return json(await roomJoin(await readBody(request)));
     if (path === "/v1/bus_send" && request.method === "POST") return json(await busSend(await readBody(request)));
     if (path === "/v1/bus_poll" && request.method === "POST") return json(busPoll(await readBody(request)));
     if ((path === "/v1/verify_receipt" || path === "/v1/verify") && request.method === "POST") return json(await verifyReceipt(await readBody(request)));
     if (path === "/v1/import_export" && request.method === "POST") return json(importExport(await readBody(request)));
     return json({
       error: "not found",
-      hint: "GET /v1/health GET /v1/skill GET /v1/doctor POST /v1/{handle_new,handle_rotate,room_open,room_post,room_pull,bus_send,bus_poll,verify_receipt,import_export} GET /v1/fraggate/list GET /v1/fraggate/describe POST /v1/fraggate/call GET /v1/mesh",
+      hint: "GET /v1/health GET /v1/skill GET /v1/doctor POST /v1/{handle_new,handle_rotate,room_open,room_post,room_pull,room_host,room_join,bus_send,bus_poll,verify_receipt,import_export} GET|POST /v1/room_list GET /v1/fraggate/list GET /v1/fraggate/describe POST /v1/fraggate/call GET /v1/mesh",
       live_ops: FRAGGATE_LIVE_OPS,
       role: ROLE,
     }, 404);

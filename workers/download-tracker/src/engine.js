@@ -23,6 +23,13 @@ export const ROOM_TTL_DEFAULT_MS = 15 * 60 * 1000;
 export const ROOM_TTL_MAX_MS = 60 * 60 * 1000;
 export const TEXT_CAP = 2000;
 export const FRAME_CAP = 64;
+export const TITLE_CAP = 80;
+export const PASSPHRASE_ITERS = 100000;
+export const PASSPHRASE_MAX = 128;
+export const PRIVATE_NOTE =
+  "Private means a passphrase is required to join. " +
+  "It is not end-to-end encryption. " +
+  "Lamb Lens Service → Clarity → Peace.";
 
 export const LIVE_OPS = Object.freeze([
   "health",
@@ -33,6 +40,9 @@ export const LIVE_OPS = Object.freeze([
   "room_open",
   "room_post",
   "room_pull",
+  "room_list",
+  "room_host",
+  "room_join",
   "bus_send",
   "bus_poll",
   "verify_receipt",
@@ -59,7 +69,9 @@ export const LIMITATION =
   "THIS IS: AZChat spendable handles, ephemeral rooms (TTL/sealed), and an agent bus. " +
   "Reached only through FragGate. mesh_enabled_default is false. " +
   "THIS IS NOT: SMTP, a public MTA, AZMail, a mesh hop, deanonymize, or a Chromium chat runner. " +
-  "Do not bridge AZChat ↔ AZMail. Stranger room_pull is 404. Author: Aziel Eliab only.";
+  "Do not bridge AZChat ↔ AZMail. Stranger room_pull is 404. " +
+  "Hosted rooms appear on the all-rooms list. A private room requires a passphrase to join " +
+  "and is not end-to-end encryption. Author: Aziel Eliab only.";
 
 export const HONEST = LIMITATION;
 
@@ -210,6 +222,7 @@ export function doctor() {
       I4: "Stranger room_pull is 404.",
       I5: "FragGate is THE single door.",
       I6: "Identity is Aziel Eliab only.",
+      I7: "Private rooms are passphrase-gated entry. The passphrase is not stored in plaintext and is not on the public list. Private is not end-to-end encryption.",
     },
     note: "Doctor is a FragGate LIVE_OPS self-check. No writes. Mesh stays off.",
   };
@@ -218,7 +231,7 @@ export function doctor() {
 export function skillMarkdown() {
   return `---
 name: AZChat
-description: Use when minting spendable handles, opening ephemeral rooms, or polling an agent bus (AZC-CHAT-0.1). Mesh hop default off. Not SMTP. Not AZMail. Do not bridge. Stranger room_pull is 404. Dual surface: Worker /v1 + POST /mcp, or aziel-runtime FragGate slug azchat. This Worker /v1/fraggate/* and /v1/mesh/* PROXY to aziel-runtime via AZIEL_RUNTIME. Suite mesh default OFF. GET /v1/mesh never enables. Product-local mesh_enable is stub/REFUSE. Author Aziel Eliab.
+description: Use when minting spendable handles, opening ephemeral rooms, hosting a listed room, joining from the all-rooms list, or polling an agent bus (AZC-CHAT-0.1). Private rooms require a passphrase to join and are not end-to-end encryption. Mesh hop default off. Not SMTP. Not AZMail. Do not bridge. Stranger room_pull is 404. Dual surface: Worker /v1 + POST /mcp, or aziel-runtime FragGate slug azchat. This Worker /v1/fraggate/* and /v1/mesh/* PROXY to aziel-runtime via AZIEL_RUNTIME. Suite mesh default OFF. GET /v1/mesh never enables. Product-local mesh_enable is stub/REFUSE. Author Aziel Eliab. Identity: Aziel Eliab only. Lamb Lens Service → Clarity → Peace.
 ---
 
 # AZChat (AZC-CHAT-0.1)
@@ -229,7 +242,9 @@ AZChat: spendable handles, ephemeral rooms, agent bus. Mesh hop default off. Not
 - HTTP: \`POST /v1/fraggate/call\` with the same envelope
 - Leftover flat names such as \`azchat_health\` still go through FragGate (\`parseTarget\`) — they are not a side door and are not listed on \`tools/list\`
 
-LIVE_OPS: health, skill, doctor, handle_new, handle_rotate, room_open, room_post, room_pull, bus_send, bus_poll, verify_receipt, import_export.
+LIVE_OPS: health, skill, doctor, handle_new, handle_rotate, room_open, room_post, room_pull, room_list, room_host, room_join, bus_send, bus_poll, verify_receipt, import_export.
+
+Hosted rooms: \`room_host\` puts a room on the all-rooms list (\`room_list\`). \`room_join\` enters a listed room. A private room stores only a PBKDF2-HMAC-SHA-256 verifier. A wrong or missing passphrase does not join. The passphrase is not on the public list and is not stored in plaintext. Private is passphrase-gated entry, not end-to-end encryption. Pairwise \`room_open\` rooms stay off the list. Stranger \`room_pull\` is 404 until a live handle is a member.
 
 Stubs (refuse): smtp, smtp_send, send, mail, deliver, deanonymize, harvest, mesh_join, mesh_enable, vpn, bridge_azmail, bridge, chromium.
 
@@ -349,6 +364,96 @@ function roomSealed(room, now = nowMs()) {
   return room.sealed === true || now >= room.expires_at;
 }
 
+function asBool(value) {
+  if (value === true || value === 1) return true;
+  if (typeof value === "string") {
+    const s = value.trim().toLowerCase();
+    return s === "1" || s === "true" || s === "yes" || s === "on";
+  }
+  return false;
+}
+
+function roomTtl(src) {
+  const ttl = Number(src.ttl_ms);
+  const n = Number.isFinite(ttl) ? ttl : ROOM_TTL_DEFAULT_MS;
+  return Math.min(ROOM_TTL_MAX_MS, Math.max(1, n));
+}
+
+function passphraseText(raw) {
+  if (raw == null) return { ok: false, error: "passphrase-required" };
+  const text = String(raw).trim();
+  if (!text) return { ok: false, error: "passphrase-required" };
+  if (text.length > PASSPHRASE_MAX) return { ok: false, error: "passphrase-too-long" };
+  return { ok: true, text };
+}
+
+function bytesToHex(bytes) {
+  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function hexToBytes(hex) {
+  const clean = String(hex || "");
+  if (!clean || clean.length % 2 !== 0 || /[^0-9a-f]/i.test(clean)) return null;
+  const out = new Uint8Array(clean.length / 2);
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(clean.slice(i * 2, i * 2 + 2), 16);
+  return out;
+}
+
+async function hashPassphrase(text, saltBytes) {
+  const salt = saltBytes || crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(text),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: PASSPHRASE_ITERS, hash: "SHA-256" },
+    key,
+    256,
+  );
+  return { salt: bytesToHex(salt), hash: bytesToHex(new Uint8Array(bits)) };
+}
+
+function timingSafeEqual(a, b) {
+  const aa = String(a);
+  const bb = String(b);
+  const len = Math.max(aa.length, bb.length);
+  let diff = aa.length ^ bb.length;
+  for (let i = 0; i < len; i++) {
+    const ca = i < aa.length ? aa.charCodeAt(i) : 0;
+    const cb = i < bb.length ? bb.charCodeAt(i) : 0;
+    diff |= ca ^ cb;
+  }
+  return diff === 0;
+}
+
+async function verifyPassphrase(text, saltHex, expectHex) {
+  const salt = hexToBytes(saltHex);
+  if (!salt || !salt.length || !expectHex) return false;
+  const hashed = await hashPassphrase(text, salt);
+  return timingSafeEqual(hashed.hash, String(expectHex));
+}
+
+function publicRoom(room) {
+  const isPrivate = room.private === true;
+  return {
+    room_id: room.id,
+    title: room.title || "",
+    host_id: room.host_id || null,
+    private: isPrivate,
+    passphrase_required: isPrivate,
+    member_count: (room.members || []).length,
+    sealed: roomSealed(room),
+    opened_at: nowIso(room.opened_at),
+    expires_at: nowIso(room.expires_at),
+    listed: true,
+    e2e: false,
+    entry: isPrivate ? "passphrase" : "open",
+  };
+}
+
 export async function roomOpen(payload) {
   const src = payload && typeof payload === "object" ? payload : {};
   const a = lookupHandle(src.token_a || src.handle_a);
@@ -359,7 +464,7 @@ export async function roomOpen(payload) {
   if (a.id === b.id) {
     return { ok: false, status: 400, error: "need-two-handles", op: "room_open" };
   }
-  const ttl = Math.min(ROOM_TTL_MAX_MS, Math.max(1, Number(src.ttl_ms) || ROOM_TTL_DEFAULT_MS));
+  const ttl = roomTtl(src);
   const opened = nowMs();
   const id = nextId("r");
   const room = {
@@ -370,6 +475,12 @@ export async function roomOpen(payload) {
     expires_at: opened + ttl,
     ttl_ms: ttl,
     sealed: false,
+    listed: false,
+    private: false,
+    title: "",
+    host_id: null,
+    passphrase_salt: null,
+    passphrase_hash: null,
   };
   store.rooms.set(id, room);
   const receipt = await receiptOf({ op: "room_open", room_id: id, members: room.members, ttl_ms: ttl });
@@ -381,6 +492,8 @@ export async function roomOpen(payload) {
     ttl_ms: ttl,
     expires_at: nowIso(room.expires_at),
     sealed: false,
+    listed: false,
+    private: false,
     mesh_enabled_default: MESH_ENABLED_DEFAULT,
     receipt,
     author: AUTHOR,
@@ -432,6 +545,157 @@ export async function roomPull(payload) {
     sealed: room.sealed,
     expires_at: nowIso(room.expires_at),
     mesh_enabled_default: MESH_ENABLED_DEFAULT,
+    author: AUTHOR,
+    limitation: LIMITATION,
+  };
+}
+
+export function roomList() {
+  const rooms = [...store.rooms.values()].filter((room) => room.listed === true).map((room) => publicRoom(room));
+  rooms.sort((a, b) => String(b.opened_at).localeCompare(String(a.opened_at)));
+  return {
+    ok: true,
+    op: "room_list",
+    count: rooms.length,
+    rooms,
+    note: "All hosted rooms. Pairwise room_open stays off this list. " + PRIVATE_NOTE,
+    e2e: false,
+    author: AUTHOR,
+    limitation: LIMITATION,
+  };
+}
+
+export async function roomHost(payload) {
+  const src = payload && typeof payload === "object" ? payload : {};
+  const host = lookupHandle(src.token || src.handle_token);
+  if (!host) return { ok: false, status: 404, error: "handle-unlinked", op: "room_host" };
+  const isPrivate = asBool(src.private);
+  const supplied = src.passphrase;
+  if (supplied != null && String(supplied).trim() && !isPrivate) {
+    return {
+      ok: false,
+      status: 400,
+      error: "private-flag-required",
+      op: "room_host",
+      note: "A passphrase was sent without private=true. The room was not created. " + PRIVATE_NOTE,
+    };
+  }
+  let salt = null;
+  let verifier = null;
+  if (isPrivate) {
+    const parsed = passphraseText(supplied);
+    if (!parsed.ok) return { ok: false, status: 400, error: parsed.error, op: "room_host", note: PRIVATE_NOTE };
+    const hashed = await hashPassphrase(parsed.text);
+    salt = hashed.salt;
+    verifier = hashed.hash;
+  }
+  const title = clip(src.title || "room", TITLE_CAP).trim() || "room";
+  const ttl = roomTtl(src);
+  const opened = nowMs();
+  const id = nextId("r");
+  const room = {
+    id,
+    members: [host.id],
+    posts: [],
+    opened_at: opened,
+    expires_at: opened + ttl,
+    ttl_ms: ttl,
+    sealed: false,
+    listed: true,
+    private: isPrivate,
+    title,
+    host_id: host.id,
+    passphrase_salt: salt,
+    passphrase_hash: verifier,
+  };
+  store.rooms.set(id, room);
+  const receipt = await receiptOf({
+    op: "room_host",
+    room_id: id,
+    host_id: host.id,
+    title,
+    private: isPrivate,
+    listed: true,
+    ttl_ms: ttl,
+  });
+  return {
+    ok: true,
+    op: "room_host",
+    room_id: id,
+    title,
+    host_id: host.id,
+    private: isPrivate,
+    passphrase_required: isPrivate,
+    listed: true,
+    e2e: false,
+    members: [host.id],
+    member_count: 1,
+    ttl_ms: ttl,
+    expires_at: nowIso(room.expires_at),
+    sealed: false,
+    receipt,
+    note: isPrivate ? PRIVATE_NOTE : "Hosted room is on the all-rooms list. Entry is open to a live handle.",
+    mesh_enabled_default: MESH_ENABLED_DEFAULT,
+    author: AUTHOR,
+    limitation: LIMITATION,
+  };
+}
+
+export async function roomJoin(payload) {
+  const src = payload && typeof payload === "object" ? payload : {};
+  const handle = lookupHandle(src.token || src.handle_token);
+  if (!handle) return { ok: false, status: 404, error: "handle-unlinked", op: "room_join" };
+  const room = store.rooms.get(String(src.room_id || ""));
+  if (!room || room.listed !== true) {
+    return { ok: false, status: 404, error: "room-missing", op: "room_join" };
+  }
+  if (roomSealed(room)) {
+    room.sealed = true;
+    return { ok: false, status: 410, error: "room-sealed", op: "room_join", room_id: room.id, sealed: true };
+  }
+  const isPrivate = room.private === true;
+  if (room.members.includes(handle.id)) {
+    return {
+      ok: true,
+      op: "room_join",
+      room_id: room.id,
+      title: room.title || "",
+      private: isPrivate,
+      already_member: true,
+      joined: false,
+      e2e: false,
+      note: isPrivate ? PRIVATE_NOTE : "Already a member of this hosted room.",
+      author: AUTHOR,
+      limitation: LIMITATION,
+    };
+  }
+  if (isPrivate) {
+    const parsed = passphraseText(src.passphrase);
+    if (!parsed.ok && parsed.error === "passphrase-too-long") {
+      return { ok: false, status: 403, error: "passphrase-too-long", op: "room_join", note: PRIVATE_NOTE };
+    }
+    if (!parsed.ok) {
+      return { ok: false, status: 403, error: "passphrase-required", op: "room_join", note: PRIVATE_NOTE };
+    }
+    const okPass = await verifyPassphrase(parsed.text, room.passphrase_salt || "", room.passphrase_hash || "");
+    if (!okPass) {
+      return { ok: false, status: 403, error: "passphrase-rejected", op: "room_join", note: PRIVATE_NOTE };
+    }
+  }
+  room.members.push(handle.id);
+  const receipt = await receiptOf({ op: "room_join", room_id: room.id, handle_id: handle.id, private: isPrivate });
+  return {
+    ok: true,
+    op: "room_join",
+    room_id: room.id,
+    title: room.title || "",
+    private: isPrivate,
+    already_member: false,
+    joined: true,
+    e2e: false,
+    member_count: room.members.length,
+    receipt,
+    note: isPrivate ? PRIVATE_NOTE : "Joined the hosted room.",
     author: AUTHOR,
     limitation: LIMITATION,
   };
@@ -514,7 +778,14 @@ export function importExport(payload) {
     op: "import_export",
     mode: "export",
     handles_live: [...store.handles.values()].filter((h) => h.live).map((h) => h.id),
-    rooms: [...store.rooms.values()].map((r) => ({ id: r.id, members: r.members.slice(), sealed: roomSealed(r) })),
+    rooms: [...store.rooms.values()].map((r) => ({
+      id: r.id,
+      members: r.members.slice(),
+      sealed: roomSealed(r),
+      listed: r.listed === true,
+      private: r.private === true,
+      title: r.title || "",
+    })),
     bus_count: store.bus.length,
     stored: false,
     author: AUTHOR,
@@ -533,6 +804,9 @@ export async function dispatch(op, payload) {
   if (name === "room_open") return roomOpen(payload);
   if (name === "room_post") return roomPost(payload);
   if (name === "room_pull") return roomPull(payload);
+  if (name === "room_list") return roomList();
+  if (name === "room_host") return roomHost(payload);
+  if (name === "room_join") return roomJoin(payload);
   if (name === "bus_send") return busSend(payload);
   if (name === "bus_poll") return busPoll(payload);
   if (name === "verify_receipt" || name === "verify") return verifyReceipt(payload);
